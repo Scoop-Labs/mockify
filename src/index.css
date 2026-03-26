@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-scoop-teal: #2D7A78;
+  --color-scoop-dark: #1A4D4B;
+  --color-scoop-orange: #FF8C00;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-poppins: "Poppins", sans-serif;
+  --font-dancing: "Dancing Script", cursive;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-[#1a1a1a];
+  }
+}
+
+.scoop-bg {
+  background-color: var(--color-scoop-teal);
+}
+
+.scoop-text {
+  color: var(--color-scoop-teal);
+}

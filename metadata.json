@@ -1,0 +1,9 @@
+{
+  "name": "Mockify - Frontend Developer Interview",
+  "description": "AI-Powered Frontend Developer Interview Assessment under Scoop Labs",
+  "requestFramePermissions": [
+    "microphone",
+    "camera",
+    "display-capture"
+  ]
+}

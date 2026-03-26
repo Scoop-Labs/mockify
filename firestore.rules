@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: user_registrations
+    // Fields:
+    //   - userInfo: map (required) { firstName: string, lastName: string, email: string }
+    //   - timestamp: timestamp (required)
+    //   - status: string (required)
+    //
+    // Collection: interviews
+    // Fields:
+    //   - id: string (required)
+    //   - date: timestamp (required)
+    //   - userInfo: map (required) { firstName: string, lastName: string, email: string }
+    //   - evaluation: map (required)
+    //   - answers: list (required)
+    //
+    // Collection: used_emails
+    // Fields:
+    //   - used: bool (required)
+    //   - lastStatus: string (required)
+    //   - timestamp: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "shravanichalla01@gmail.com" && request.auth.token.email_verified == true) ||
+         (request.auth.token.email == "bibijanrajpal@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUserInfo(data) {
+      return data.keys().hasAll(['firstName', 'lastName', 'email']) &&
+             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 100 &&
+             data.lastName is string && data.lastName.size() >= 0 && data.lastName.size() < 100 &&
+             isValidEmail(data.email);
+    }
+
+    function isValidUserRegistration(data) {
+      return data.keys().hasAll(['userInfo', 'timestamp', 'status']) &&
+             isValidUserInfo(data.userInfo) &&
+             data.timestamp is timestamp &&
+             data.status is string && data.status.size() > 0 && data.status.size() < 50;
+    }
+
+    function isValidInterview(data) {
+      return data.keys().hasAll(['id', 'date', 'userInfo', 'evaluation', 'answers']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
+             data.date is timestamp &&
+             isValidUserInfo(data.userInfo) &&
+             data.evaluation is map &&
+             data.answers is list;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /user_registrations/{regId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || isValidUserRegistration(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /interviews/{interviewId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || isValidInterview(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /certificates/{certId} {
+      // Allow anyone to read a certificate for verification purposes
+      allow read: if true;
+      
+      // Only authenticated users can create their own certificate records
+      allow create: if isAuthenticated() && 
+                      request.resource.data.keys().hasAll(['certId', 'userId', 'userName', 'score', 'date', 'type']) &&
+                      request.resource.data.userId == request.auth.uid &&
+                      request.resource.data.certId is string &&
+                      request.resource.data.userName is string &&
+                      request.resource.data.score is number &&
+                      request.resource.data.date is timestamp &&
+                      request.resource.data.type is string;
+                      
+      // Only admins can update or delete certificate records
+      allow update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      allow write: if isAdmin();
+    }
+
+    match /used_emails/{email} {
+      // Allow anyone to check if an email is used (get only, no list)
+      allow get: if true;
+      // Allow anyone to mark their email as used when starting/completing
+      allow create, update: if request.resource.data.keys().hasAll(['used', 'lastStatus', 'timestamp']) &&
+                              request.resource.data.used == true &&
+                              request.resource.data.lastStatus is string &&
+                              request.resource.data.timestamp is timestamp;
+    }
+
+    match /logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || (request.resource.data.keys().hasAll(['event', 'timestamp']) &&
+                      request.resource.data.event is string &&
+                      request.resource.data.timestamp is timestamp);
+      allow update, delete: if isAdmin();
+    }
+    
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
