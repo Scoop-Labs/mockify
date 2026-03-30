@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Send, CheckCircle, AlertCircle, Play, RefreshCw, User, Award, X, Download, MapPin, Mail, Phone, Instagram, Youtube, Facebook, Linkedin, Check, Code } from 'lucide-react';
+import { Mic, MicOff, Send, CheckCircle, AlertCircle, Play, RefreshCw, User, Award, X, Download, MapPin, Mail, Phone, Instagram, Youtube, Facebook, Linkedin, Check, Code, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-import { onAuthStateChanged, User as FirebaseUser, signInWithPopup } from 'firebase/auth';
+import { onAuthStateChanged, User as FirebaseUser, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { collection, addDoc, getDocs, query, orderBy, Timestamp, serverTimestamp, where, limit, doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, handleFirestoreError, OperationType, googleProvider } from './firebase';
 import html2canvas from 'html2canvas';
@@ -253,8 +253,8 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
           </h1>
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center">
-              <span className="text-5xl md:text-7xl font-bold text-black italic">A</span>
-              <span className="text-5xl md:text-7xl font-bold text-[#f27d26] italic">i</span>
+              <span className="text-3xl md:text-4xl font-bold text-black italic">A</span>
+              <span className="text-3xl md:text-4xl font-bold text-[#f27d26] italic">i</span>
             </div>
             <span className="text-5xl md:text-7xl font-bold text-black">- Interview</span>
           </div>
@@ -264,7 +264,7 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
         <div className="pt-2">
           <button
             onClick={onStart}
-            className="group relative flex items-center bg-white border-2 border-gray-200 rounded-full pl-3 pr-10 py-3 hover:border-scoop-orange transition-all shadow-xl hover:shadow-2xl active:scale-95"
+            className="cursor-pointer group relative flex items-center bg-white border-2 border-gray-200 rounded-full pl-3 pr-10 py-3 hover:border-scoop-orange transition-all shadow-xl hover:shadow-2xl active:scale-95"
           >
             <div className="bg-[#0c7a7a] rounded-full p-5 mr-5 group-hover:bg-scoop-orange transition-colors">
               <Play className="text-white fill-white" size={32} />
@@ -302,12 +302,12 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
       {/* Right Content - Character */}
       <div className="flex-1 relative hidden md:flex justify-end items-center pr-8 md:pr-16">
         <div className="relative w-full max-w-xl">
-          <motion.img 
+          <motion.img
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            src="/mannequin3.png" 
-            alt="AI Interviewer" 
+            src="/mannequin3.png"
+            alt="AI Interviewer"
             className="w-full h-auto object-contain z-20 relative scale-[1.5] lg:scale-[1.6] origin-bottom drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)]"
             referrerPolicy="no-referrer"
           />
@@ -322,7 +322,7 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
       <svg viewBox="0 0 1440 320" className="absolute bottom-0 w-full h-full preserve-3d" preserveAspectRatio="none">
         <path fill="#f27d26" fillOpacity="1" d="M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,128C960,139,1056,181,1152,197.3C1248,213,1344,203,1392,197.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
       </svg>
-      
+
       {/* Bottom Right Circuit Pattern */}
       <div className="absolute bottom-4 right-4 w-64 h-64 opacity-30">
         <svg viewBox="0 0 200 200" className="w-full h-full text-black/20">
@@ -335,6 +335,13 @@ const LandingPage = ({ onStart }: { onStart: () => void }) => (
           <circle cx="80" cy="60" r="3" fill="currentColor" />
           <circle cx="60" cy="40" r="3" fill="currentColor" />
         </svg>
+      </div>
+
+      {/* Copyright Footer */}
+      <div className="absolute bottom-4 left-0 w-full text-center z-20 text-white">
+        <p className="text-[15px] font-medium tracking-wide drop-shadow-sm">
+          &copy; Copyright Scoop Labs. All Rights Reserved
+        </p>
       </div>
     </div>
 
@@ -364,14 +371,14 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
 
   const downloadExcel = (data: any[], filename: string) => {
     const headers = ['Date', 'First Name', 'Last Name', 'Email', 'Score', 'Status'];
-    
+
     // Create a map to keep the most "complete" record for each email
     const uniqueRecords = new Map();
-    
+
     data.forEach(item => {
       const email = item.userInfo.email.toLowerCase();
       const existing = uniqueRecords.get(email);
-      
+
       if (!existing || (item.evaluation && !existing.evaluation)) {
         uniqueRecords.set(email, item);
       }
@@ -385,7 +392,7 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
       u.evaluation ? `${u.evaluation.score}%` : 'N/A',
       u.evaluation ? 'Completed' : (u.status || 'Started')
     ]);
-    
+
     const csvContent = [headers, ...rows].map(e => e.map(val => `"${val}"`).join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
@@ -412,14 +419,14 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
         <div className="flex items-center gap-4">
           <button
             onClick={() => downloadExcel([...registrations, ...users], "all_user_logs.csv")}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2"
+            className="cursor-pointer px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2"
           >
             <Download size={16} />
             Export to Excel
           </button>
           <button
             onClick={onBack}
-            className="p-2 text-black/40 hover:text-black transition-colors"
+            className="cursor-pointer p-2 text-black/40 hover:text-black transition-colors"
           >
             <X size={24} />
           </button>
@@ -427,18 +434,30 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
       </div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm space-y-2">
-          <p className="text-xs font-bold uppercase tracking-widest text-black/40">Get Started Clicks</p>
-          <p className="text-4xl font-black text-scoop-orange">{registrations.filter(r => r.status === 'clicked_get_started').length}</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-black/40">Total Site Visitors</p>
+          <p className="text-4xl font-black text-blue-600">
+            {registrations.filter(r => r.status === 'site_visit').length}
+          </p>
         </div>
         <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm space-y-2">
           <p className="text-xs font-bold uppercase tracking-widest text-black/40">Started Test</p>
-          <p className="text-4xl font-black text-scoop-teal">{registrations.filter(r => r.status === 'started_test').length}</p>
+          <p className="text-4xl font-black text-scoop-teal">
+            {registrations.filter(r => r.status === 'started_test').length}
+          </p>
         </div>
         <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm space-y-2">
-          <p className="text-xs font-bold uppercase tracking-widest text-black/40">Completed Interviews</p>
-          <p className="text-4xl font-black text-emerald-600">{registrations.filter(r => r.status === 'completed_interview').length}</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-black/40">Drop-offs (Exits)</p>
+          <p className="text-4xl font-black text-amber-600">
+            {registrations.filter(r => r.status.includes('exited') || r.status.includes('tab_closed')).length}
+          </p>
+        </div>
+        <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm space-y-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-black/40">Completion Rate</p>
+          <p className="text-4xl font-black text-emerald-600">
+            {Math.round((registrations.filter(r => r.status === 'completed_interview').length / Math.max(1, registrations.filter(r => r.status === 'started_test').length)) * 100)}%
+          </p>
         </div>
       </div>
 
@@ -476,7 +495,9 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
                   <td className="p-4 font-bold">{reg.userInfo.firstName} {reg.userInfo.lastName}</td>
                   <td className="p-4 text-sm text-black/60">{reg.userInfo.email}</td>
                   <td className="p-4">
-                    <span className="text-[10px] font-mono uppercase text-amber-600 bg-amber-50 px-2 py-1 rounded">Started / Incomplete</span>
+                    <span className="text-[10px] font-mono uppercase text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                      {reg.status === 'started_test' ? 'Started / Incomplete' : reg.status.replace(/_/g, ' ')}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -561,17 +582,184 @@ export default function App() {
   const streamsRef = useRef<{ camera: MediaStream | null, screen: MediaStream | null }>({ camera: null, screen: null });
 
   useEffect(() => {
+    // Check for redirect result on mount
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          const user = result.user;
+          setUser(user);
+
+          // Auto-fill userInfo if we are in the welcome screen
+          if (user.displayName) {
+            const names = user.displayName.split(' ');
+            const newUserInfo = {
+              firstName: names[0] || '',
+              lastName: names.slice(1).join(' ') || '',
+              email: user.email || ''
+            };
+            setUserInfo(newUserInfo);
+
+            // If they were on the welcome screen, auto-start the interview
+            if (localStorage.getItem('pending_interview_start') === 'true') {
+              localStorage.removeItem('pending_interview_start');
+              setTimeout(() => startInterview(), 500);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Redirect Auth Error:", error);
+      }
+    };
+    handleRedirectResult();
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
     });
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    // Log visit only once per session/load when they land
+    if (state === 'landing') {
+      logUserEvent('site_visit');
+    }
+  }, [state]);
+
+  useEffect(() => {
+    // Sync state with browser history for back/forward support
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.interviewState) {
+        setState(event.state.interviewState);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    // Initial history state
+    if (!window.history.state) {
+      window.history.replaceState({ interviewState: state }, "");
+    }
+
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Sync current state to history whenever it changes
+  useEffect(() => {
+    if (window.history.state?.interviewState !== state) {
+      window.history.pushState({ interviewState: state }, "");
+    }
+  }, [state]);
+
+  const handleGoogleAuth = async () => {
+    try {
+      localStorage.setItem('pending_interview_start', 'true');
+      await signInWithRedirect(auth, googleProvider);
+    } catch (error) {
+      console.error("Google Auth error:", error);
+    }
+  };
+
+  // --- Silent Background Email Sender ---
+  useEffect(() => {
+    if (state === 'completed' && isCompleted && userInfo.email) {
+      if (sessionStorage.getItem('email_delivered')) return;
+      sessionStorage.setItem('email_delivered', 'true');
+
+      const captureAndEmail = async () => {
+        try {
+          // Wait 2500ms for everything to fully render visually
+          await new Promise(resolve => setTimeout(resolve, 2500));
+          
+          const element = document.getElementById('certificate-to-download');
+          if (!element) {
+            await sendBrevoEmail(userInfo.email, userInfo.firstName, evaluation?.score || 0);
+            return;
+          }
+
+          const canvas = await html2canvas(element, {
+            scale: 2, 
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            width: 1123,
+            height: 794
+          });
+          
+          const base64Data = canvas.toDataURL('image/png', 0.9).split(',')[1];
+          await sendBrevoEmail(userInfo.email, userInfo.firstName, evaluation?.score || 0, base64Data);
+        } catch (error) {
+          console.error("Silent capture failed", error);
+          await sendBrevoEmail(userInfo.email, userInfo.firstName, evaluation?.score || 0);
+        }
+      };
+      captureAndEmail();
+    }
+  }, [state, isCompleted, userInfo, evaluation]);
+
+  const sendBrevoEmail = async (email: string, firstName: string, score: number, attachmentBase64?: string) => {
+    // Note: User needs to provide their actual Brevo API key
+    const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
+
+    try {
+      const payload: any = {
+        sender: { name: "Scoop Labs", email: "support@scooplabs.in" },
+        to: [{ email, name: firstName }],
+        subject: `Interview Update: ${firstName}`,
+        htmlContent: `
+          <div style="font-family: 'Inter', system-ui, sans-serif; padding: 40px; background-color: #ffffff; color: #1e293b; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <p style="font-size: 16px; margin-bottom: 24px;">Hi ${firstName},</p>
+            
+            <p style="font-size: 16px; margin-bottom: 16px;">Thank you for actively participating in the interview. Your time and effort are greatly appreciated.</p>
+            
+            <p style="font-size: 16px; margin-bottom: 32px;">Wishing you all the best in your future endeavors.</p>
+            
+            <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; color: #1e293b; line-height: 1.8;">
+              <p style="margin: 0 0 1.5em 0; font-size: 16px;">Best regards,</p>
+              <p style="margin: 0; font-size: 18px; font-weight: bold;">Team Scoop Labs</p>
+              <div style="margin: 16px 0;">
+                <p style="margin: 0; font-size: 16px;"><strong>Contact No:</strong> +91 98444 00550</p>
+                <p style="margin: 0; font-size: 16px;"><strong>Email:</strong> <a href="mailto:info@scooplabs.in" style="color: #3b82f6; text-decoration: none;">info@scooplabs.in</a></p>
+                <p style="margin: 0; font-size: 16px;"><strong>Website:</strong> <a href="https://www.scooplabs.in" style="color: #1e293b; text-decoration: none;">www.scooplabs.in</a></p>
+              </div>
+              <div style="margin-top: 24px;">
+                <img src="https://crm.scooplabs.in/images/logo.png" alt="Scoop Labs" style="max-height: 40px; display: block;" />
+                <p style="margin: 8px 0 0 0; font-size: 16px; color: #f27d26;">-Innovative Labs for Tech Learning-</p>
+              </div>
+            </div>
+          </div>
+        `
+      };
+
+      if (attachmentBase64) {
+        payload.attachment = [{
+          name: `${firstName}_Certificate.png`,
+          content: attachmentBase64
+        }];
+      }
+
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'api-key': BREVO_API_KEY,
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        console.error("Brevo Email Error:", await response.text());
+      } else {
+        console.log("Completion email sent successfully via Brevo");
+      }
+    } catch (error) {
+      console.error("Error sending Brevo email:", error);
+    }
+  };
+
   const handleLogin = async () => {
     try {
-      const u = await signInWithPopup(auth, googleProvider);
-      setUser(u.user);
-      return u.user;
+      await signInWithRedirect(auth, googleProvider);
     } catch (error) {
       console.error("Login failed", error);
     }
@@ -595,13 +783,23 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (state === 'interviewing') {
+        logUserEvent(`tab_closed_at_q${currentQuestionIndex + 1}`);
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [state, currentQuestionIndex]);
+
   const saveInterviewToFirebase = async (interviewData: any) => {
     try {
       await addDoc(collection(db, 'interviews'), {
         ...interviewData,
         date: Timestamp.now()
       }).catch(e => handleFirestoreError(e, OperationType.CREATE, 'interviews'));
-      
+
       // Also log as a completion event
       await logUserEvent('completed_interview', interviewData.userInfo);
     } catch (error) {
@@ -613,7 +811,7 @@ export default function App() {
     try {
       const info = customUserInfo || userInfo;
       const email = (info.email || 'anonymous@example.com').toLowerCase().trim();
-      
+
       // Log registration
       await addDoc(collection(db, 'user_registrations'), {
         userInfo: {
@@ -624,6 +822,15 @@ export default function App() {
         timestamp: serverTimestamp(),
         status
       }).catch(e => handleFirestoreError(e, OperationType.CREATE, 'user_registrations'));
+
+      // Send to Google Analytics (gtag)
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', status, {
+          'event_category': 'Interview',
+          'event_label': status,
+          'user_email': email
+        });
+      }
 
       // Also mark email as used if they started or completed
       if (status === 'started_test' || status === 'completed_test') {
@@ -638,6 +845,33 @@ export default function App() {
       await logEvent(status, { email, firstName: info.firstName });
     } catch (error) {
       console.error(`Error logging event: ${status}`, error);
+    }
+  };
+
+  const syncToCRM = async (info: { firstName: string, lastName: string, email: string }) => {
+    try {
+      const payload = {
+        first_name: info.firstName,
+        last_name: info.lastName,
+        email_id: info.email,
+        source: "ai-interview"
+      };
+
+      const response = await fetch('https://crm.scooplabs.in/api/contacts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`CRM Sync failed with status: ${response.status}`);
+      }
+
+      console.log("Successfully synced contact to CRM");
+    } catch (error) {
+      console.error("CRM Sync Error:", error);
     }
   };
 
@@ -664,7 +898,7 @@ export default function App() {
     if (isPreloading) return;
     setIsPreloading(true);
     setCertError(null);
-    
+
     const imagesToLoad: Record<string, string> = {};
 
     console.log("Starting image preloading for certificate...");
@@ -685,7 +919,7 @@ export default function App() {
           };
 
           let blob = await tryDirect();
-          
+
           if (!blob) {
             console.log(`Direct fetch failed for ${key}, trying proxies...`);
             const proxies = [
@@ -695,15 +929,15 @@ export default function App() {
               `https://api.codetabs.com/v1/proxy?quest=${url}`,
               `https://thingproxy.freeboard.io/fetch/${url}`
             ];
-            
+
             for (const proxyUrl of proxies) {
               try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout per proxy
-                
+
                 const response = await fetch(proxyUrl, { signal: controller.signal });
                 clearTimeout(timeoutId);
-                
+
                 if (!response.ok) continue;
                 const b = await response.blob();
                 if (b.size > 100) {
@@ -713,7 +947,7 @@ export default function App() {
               } catch (e) { continue; }
             }
           }
-          
+
           if (blob) {
             const base64 = await new Promise<string>((resolve, reject) => {
               const reader = new FileReader();
@@ -721,7 +955,7 @@ export default function App() {
               reader.onerror = reject;
               reader.readAsDataURL(blob!);
             });
-            
+
             if (base64.length > 200) {
               setCertificateImages(prev => ({ ...prev, [key]: base64 }));
               console.log(`Successfully preloaded ${key}`);
@@ -739,7 +973,7 @@ export default function App() {
         Promise.all(loadPromises),
         new Promise(resolve => setTimeout(resolve, 45000)) // 45s max for all images
       ]);
-      
+
       console.log("Image preloading batch finished.");
     } catch (error) {
       console.error("Error in preloadImages batch:", error);
@@ -757,11 +991,11 @@ export default function App() {
   const downloadCertificate = async () => {
     if (isGenerating) return;
     setIsGenerating(true);
-    
+
     setCertError(null);
     console.log("Starting certificate download process...");
     const element = document.getElementById('certificate-to-download');
-    
+
     if (!element) {
       console.error("CRITICAL: Certificate element 'certificate-to-download' not found in DOM");
       setCertError("Certificate template not found. Please try refreshing the page.");
@@ -770,11 +1004,11 @@ export default function App() {
     }
 
     console.log("Certificate element found. Proceeding with generation...");
-    
+
     try {
       // Generate a unique certificate ID for security/verification
       const certId = `ML-${Math.random().toString(36).substring(2, 8).toUpperCase()}-${Date.now().toString().slice(-4)}`;
-      
+
       // Save certificate record to Firestore for verification
       if (auth.currentUser) {
         try {
@@ -787,7 +1021,7 @@ export default function App() {
             type: 'Frontend Developer Interview'
           });
           console.log("Certificate record saved to Firestore:", certId);
-          
+
           // Log the download event
           await logEvent('downloaded_certificate', { certId, score: evaluation?.score });
         } catch (fsError) {
@@ -798,9 +1032,9 @@ export default function App() {
 
       // Small delay to ensure everything is rendered
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       console.log("Preparing for html2canvas rendering...");
-      
+
       const elementToCapture = element;
 
       const canvas = await html2canvas(elementToCapture, {
@@ -838,16 +1072,16 @@ export default function App() {
           }
         }
       });
-      
+
       console.log("Canvas rendering complete. Size:", canvas.width, "x", canvas.height);
-      
+
       if (canvas.width === 0 || canvas.height === 0) {
         throw new Error("Generated canvas has zero dimensions. This usually happens if the element is hidden.");
       }
 
       console.log("Converting canvas to image data...");
       const imgData = canvas.toDataURL('image/png', 1.0);
-      
+
       console.log("Saving PNG file...");
       const fileName = `${userInfo.firstName}_${userInfo.lastName}_Certificate.png`.replace(/\s+/g, '_');
       const link = document.createElement('a');
@@ -856,7 +1090,7 @@ export default function App() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       console.log("Certificate download triggered successfully!");
       setHasDownloaded(true);
     } catch (error) {
@@ -881,9 +1115,9 @@ export default function App() {
     const issueMonth = new Date().getMonth() + 1;
     const certUrl = window.location.origin;
     const certId = `${userInfo.firstName}_${userInfo.lastName}_${Date.now()}`;
-    
+
     const addUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(certName)}&organizationName=${encodeURIComponent(orgName)}&issueYear=${issueYear}&issueMonth=${issueMonth}&certUrl=${encodeURIComponent(certUrl)}&certId=${encodeURIComponent(certId)}`;
-    
+
     window.open(addUrl, '_blank', 'width=600,height=600');
   };
 
@@ -905,11 +1139,11 @@ export default function App() {
     // it should be fine. However, to be extra safe with state closures:
     setState(currentState => {
       if (currentState !== 'interviewing') return currentState;
-      
+
       // We can't easily access currentAnswer/answers here without refs if we want to be 100% safe
       // but let's assume the closure is fresh enough or use a ref for answers if needed.
       // For now, let's just trigger the evaluation with what we have.
-      return currentState; 
+      return currentState;
     });
 
     // Actually, let's just use the current state values as they are captured in the effect
@@ -917,13 +1151,13 @@ export default function App() {
 
     const finalAnswer = currentAnswer.trim() || "No answer provided (Auto-submitted due to tab switch).";
     const newAnswers = [...answers];
-    
+
     while (newAnswers.length < QUESTIONS.length) {
       newAnswers.push(newAnswers.length === answers.length ? finalAnswer : "No answer provided (Auto-submitted due to tab switch).");
     }
-    
+
     performEvaluation(newAnswers);
-    
+
     if (streamsRef.current.camera) {
       streamsRef.current.camera.getTracks().forEach(track => track.stop());
     }
@@ -954,21 +1188,21 @@ export default function App() {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      
+
       const setVoiceAndSpeak = () => {
         const voices = window.speechSynthesis.getVoices();
         const femaleVoice = voices.find(v => v.name.includes('Google US English') && v.name.includes('Female')) ||
-                            voices.find(v => v.name.includes('Samantha')) ||
-                            voices.find(v => v.name.includes('Victoria')) ||
-                            voices.find(v => v.name.toLowerCase().includes('female')) ||
-                            voices.find(v => v.name.includes('Zira')) ||
-                            voices.find(v => v.lang.startsWith('en') && v.name.includes('Female'));
-        
+          voices.find(v => v.name.includes('Samantha')) ||
+          voices.find(v => v.name.includes('Victoria')) ||
+          voices.find(v => v.name.toLowerCase().includes('female')) ||
+          voices.find(v => v.name.includes('Zira')) ||
+          voices.find(v => v.lang.startsWith('en') && v.name.includes('Female'));
+
         if (femaleVoice) utterance.voice = femaleVoice;
-        
+
         utterance.rate = 1.0;
         utterance.pitch = 1.0; // Slightly lower pitch for a more natural professional female voice
-        
+
         utterance.onstart = () => {
           setIsSpeaking(true);
           isSpeakingRef.current = true;
@@ -993,7 +1227,7 @@ export default function App() {
           setIsSpeaking(false);
           isSpeakingRef.current = false;
         };
-        
+
         window.speechSynthesis.speak(utterance);
       };
 
@@ -1093,7 +1327,7 @@ export default function App() {
         if (event.error === 'no-speech') {
           return;
         }
-        
+
         console.error('Speech recognition error', event.error);
         if (event.error === 'not-allowed') {
           setSpeechError('Microphone access denied.');
@@ -1146,7 +1380,7 @@ export default function App() {
 
   const startInterview = async (forceDemo = false) => {
     if (hasFinished) return;
-    
+
     setIsRequestingMic(true);
     setSpeechError(null);
     setDuplicateError(null);
@@ -1167,7 +1401,7 @@ export default function App() {
       // Check a dedicated 'used_emails' collection where doc ID is the email
       // This is more secure than querying the full interviews collection
       const emailDoc = await getDoc(doc(db, 'used_emails', userInfo.email.toLowerCase().trim()));
-      
+
       if (emailDoc.exists()) {
         setDuplicateError('This email address has already been used for an interview. Only one attempt is allowed.');
         setIsRequestingMic(false);
@@ -1186,6 +1420,9 @@ export default function App() {
     try {
       // Log registration to Firebase (non-blocking)
       logUserEvent('started_test');
+
+      // Sync to Scoop Labs CRM (non-blocking)
+      syncToCRM(userInfo);
 
       if (isDemoMode || forceDemo) {
         // Skip hardware in demo mode
@@ -1209,7 +1446,7 @@ export default function App() {
         try {
           const screenStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true });
           streamsRef.current.screen = screenStream;
-          
+
           // Listen for screen sharing stop
           screenStream.getVideoTracks()[0].onended = () => {
             if (state === 'interviewing') {
@@ -1238,7 +1475,7 @@ export default function App() {
       clearTimeout(skipTimeout);
       setIsRequestingMic(false);
       startCountdown();
-      
+
     } catch (err) {
       clearTimeout(skipTimeout);
       console.error('Permission access error:', err);
@@ -1252,7 +1489,7 @@ export default function App() {
     // Start 3-second countdown
     let count = 3;
     setCountdown(count);
-    
+
     const interval = setInterval(() => {
       count -= 1;
       if (count <= 0) {
@@ -1283,7 +1520,7 @@ export default function App() {
 
   const performEvaluation = (allAnswers: string[]) => {
     setState('evaluating');
-    
+
     // Simulate processing delay
     setTimeout(async () => {
       const individualScores: number[] = [];
@@ -1294,10 +1531,10 @@ export default function App() {
       allAnswers.forEach((answer, index) => {
         const question = (QUESTIONS as any)[index];
         const lowerAnswer = answer.toLowerCase();
-        
+
         let qEarned = 0;
         const missedConcepts: string[] = [];
-        
+
         question.conceptGroups.forEach((group: any) => {
           // Check if any synonym in the group is present in the answer
           const isFound = group.synonyms.some((synonym: string) => {
@@ -1306,17 +1543,17 @@ export default function App() {
             const regex = new RegExp(`\\b${escapedSynonym}\\b`, 'i');
             return regex.test(lowerAnswer);
           });
-          
+
           if (isFound) {
             qEarned += 1;
           } else {
             missedConcepts.push(group.point); // The descriptive point
           }
         });
-        
+
         const qPossible = question.conceptGroups.length;
         const normalizedQScore = Math.round((qEarned / qPossible) * 10);
-        
+
         individualScores.push(normalizedQScore);
         totalEarnedPoints += qEarned;
         totalPossiblePoints += qPossible;
@@ -1327,16 +1564,16 @@ export default function App() {
       });
 
       const finalScore = Math.round((totalEarnedPoints / totalPossiblePoints) * 100);
-      
+
       const feedback = finalScore >= 80 ? "Exceptional! You have a deep understanding of web development and explained concepts clearly." :
-                     finalScore >= 60 ? "Great job! You know the core concepts well, though some details could be more precise." :
-                     finalScore >= 40 ? "Good effort. You understand the basics, but try to use more technical terminology or explain the 'why' behind concepts." :
-                     "Keep learning! Focus on the fundamental concepts of HTML, CSS, and JS. Try to explain things in terms of structure, style, and logic.";
+        finalScore >= 60 ? "Great job! You know the core concepts well, though some details could be more precise." :
+          finalScore >= 40 ? "Good effort. You understand the basics, but try to use more technical terminology or explain the 'why' behind concepts." :
+            "Keep learning! Focus on the fundamental concepts of HTML, CSS, and JS. Try to explain things in terms of structure, style, and logic.";
 
       const finalEvaluation = {
         score: finalScore,
         feedback,
-        keywords: [], 
+        keywords: [],
         individualScores,
         suggestions
       };
@@ -1347,7 +1584,7 @@ export default function App() {
       const newHistoryItem: HistoryItem = {
         id: `SV-${Math.floor(Math.random() * 100000)}`,
         date: new Date().toISOString(),
-        userInfo: { 
+        userInfo: {
           ...userInfo,
           email: userInfo.email.toLowerCase().trim()
         },
@@ -1356,7 +1593,9 @@ export default function App() {
       };
 
       saveInterviewToFirebase(newHistoryItem);
-      
+
+      // Email sending is now handled by the silent background capture effect below
+
       // Log viewing feedback
       await logEvent('viewed_feedback', { score: finalScore });
 
@@ -1392,7 +1631,10 @@ export default function App() {
     window.speechSynthesis.cancel();
     setHasFinished(true);
     localStorage.setItem('interview_finished', 'true');
-    
+
+    // Log exit event with progress
+    logUserEvent(`interview_exited_at_q${currentQuestionIndex + 1}`);
+
     // Stop microphone
     shouldBeListening.current = false;
     if (recognitionRef.current) {
@@ -1430,7 +1672,7 @@ export default function App() {
     setTimeLeft(600);
     setAutoStartEnabled(false);
     window.speechSynthesis.cancel();
-    
+
     // Stop and reset microphone state
     shouldBeListening.current = false;
     if (recognitionRef.current) {
@@ -1476,20 +1718,21 @@ export default function App() {
     if (state !== 'interviewing') {
       setState('landing');
     }
-    
+
     const newCount = secretClickCount + 1;
     setSecretClickCount(newCount);
-    
+
     // Reset count after 3 seconds of inactivity
     if (window.logoClickTimeout) clearTimeout(window.logoClickTimeout);
     window.logoClickTimeout = setTimeout(() => setSecretClickCount(0), 3000);
-    
+
     if (newCount >= 5) {
       setSecretClickCount(0);
       if (window.logoClickTimeout) clearTimeout(window.logoClickTimeout);
       let activeUser = user;
       if (!activeUser) {
-        activeUser = await handleLogin();
+        handleLogin();
+        return;
       }
       if (activeUser && IS_ADMIN(activeUser.email)) {
         fetchAdminData(activeUser);
@@ -1513,16 +1756,34 @@ export default function App() {
       {/* Header */}
       <header className="border-b border-black/5 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="w-full px-6 h-20 flex items-center justify-between">
-          <div 
-            className="flex items-center gap-3 cursor-pointer select-none"
-            onClick={handleLogoClick}
-          >
-            <img 
-              src="https://scooplabs.in/images/sl2.svg" 
-              alt="Scoop Labs" 
-              className="h-12 object-contain" 
-              referrerPolicy="no-referrer"
-            />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 text-black/50 hidden sm:flex">
+              <button
+                onClick={() => window.history.back()}
+                className="p-2 rounded-full hover:bg-black/5 transition-colors hover:text-black cursor-pointer"
+                title="Click to go back"
+              >
+                <ChevronLeft size={20} strokeWidth={2.5} />
+              </button>
+              <button
+                onClick={() => window.history.forward()}
+                className="p-2 rounded-full hover:bg-black/5 transition-colors hover:text-black cursor-pointer"
+                title="Click to go forward"
+              >
+                <ChevronRight size={20} strokeWidth={2.5} />
+              </button>
+            </div>
+            <div
+              className="flex items-center gap-3 cursor-pointer select-none sm:pl-4 sm:border-l border-black/10"
+              onClick={handleLogoClick}
+            >
+              <img
+                src="https://scooplabs.in/images/sl2.svg"
+                alt="Scoop Labs"
+                className="h-12 object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
           </div>
           <div className="flex items-center gap-6">
             {state === 'interviewing' && (
@@ -1531,9 +1792,9 @@ export default function App() {
                   <span className="w-2 h-2 rounded-full bg-current"></span>
                   {formatTime(timeLeft)}
                 </div>
-                <button 
+                <button
                   onClick={resetInterview}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors border border-transparent hover:border-red-100"
+                  className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors border border-transparent hover:border-red-100"
                 >
                   <X size={14} />
                   Exit
@@ -1575,7 +1836,7 @@ export default function App() {
                       {isCompleted ? 'Interview Completed' : 'Interview Exited'}
                     </h2>
                     <p className="text-black/60 max-w-md mx-auto">
-                      {isCompleted 
+                      {isCompleted
                         ? 'Congratulations! You have successfully completed your technical interview.'
                         : 'You have exited the interview. Thank you for your participation.'}
                     </p>
@@ -1585,7 +1846,7 @@ export default function App() {
                     <div className="w-full max-w-md space-y-4">
                       <button
                         onClick={() => setState('completed')}
-                        className="w-full px-6 py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-200"
+                        className="cursor-pointer w-full px-6 py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-200"
                       >
                         <Award size={20} />
                         View Results & Certificate
@@ -1597,7 +1858,7 @@ export default function App() {
                 </div>
               ) : countdown !== null ? (
                 <div className="text-center space-y-4">
-                  <motion.div 
+                  <motion.div
                     key={countdown}
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -1657,7 +1918,7 @@ export default function App() {
                     <button
                       onClick={() => startInterview()}
                       disabled={isRequestingMic || !userInfo.firstName.trim() || !userInfo.lastName.trim() || !userInfo.email.trim()}
-                      className="group relative w-full inline-flex items-center justify-center gap-3 bg-scoop-teal text-white px-12 py-6 rounded-2xl font-bold text-2xl transition-all hover:bg-scoop-dark hover:scale-[1.02] active:scale-95 shadow-2xl shadow-scoop-teal/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-scoop-teal"
+                      className="cursor-pointer group relative w-full inline-flex items-center justify-center gap-3 bg-scoop-teal text-white px-12 py-6 rounded-2xl font-bold text-2xl transition-all hover:bg-scoop-dark hover:scale-[1.02] active:scale-95 shadow-2xl shadow-scoop-teal/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-scoop-teal"
                     >
                       {isRequestingMic ? 'Requesting Mic...' : 'Start Interview'}
                       {!isRequestingMic && <Play size={24} fill="currentColor" className="transition-transform group-hover:translate-x-1" />}
@@ -1671,7 +1932,7 @@ export default function App() {
                           setAntiCheatError(null);
                           startInterview(true);
                         }}
-                        className="text-scoop-teal text-sm font-bold hover:underline"
+                        className="cursor-pointer text-scoop-teal text-sm font-bold hover:underline"
                       >
                         Trouble starting? Try Demo Mode (Skip Hardware)
                       </button>
@@ -1723,15 +1984,15 @@ export default function App() {
                 <div className="relative flex flex-col items-center">
                   {/* Avatar Circle */}
                   <div className={`relative w-32 h-32 rounded-full overflow-hidden border-4 transition-all duration-500 z-10 flex items-center justify-center ${isSpeaking ? 'border-emerald-500 scale-110 shadow-2xl shadow-emerald-200 bg-emerald-50' : 'border-black/5 bg-gray-100'}`}>
-                    <img 
-                      src="/mannequin3.png" 
-                      alt="AI Interviewer" 
+                    <img
+                      src="/mannequin3.png"
+                      alt="AI Interviewer"
                       className={`w-full h-full object-cover object-top transition-transform duration-500 ${isSpeaking ? 'scale-110' : 'scale-100'}`}
                       referrerPolicy="no-referrer"
                       loading="eager"
                     />
                   </div>
-                  
+
                   {/* Desk Background (Simulated) */}
                   <div className="absolute top-16 w-48 h-24 bg-stone-100 border border-stone-200 rounded-t-3xl -z-0 shadow-inner">
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 w-16 h-1 bg-stone-200 rounded-full opacity-50"></div>
@@ -1767,7 +2028,7 @@ export default function App() {
                 {/* Question */}
                 <div className="space-y-6 min-h-[120px]">
                   <AnimatePresence mode="wait">
-                    <motion.h2 
+                    <motion.h2
                       key={currentQuestionIndex}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -1783,18 +2044,18 @@ export default function App() {
                 {/* Answer Area */}
                 <div className="space-y-4">
                   <div className="relative">
-      <textarea
-        value={currentAnswer + (transcript ? transcript : '')}
-        onChange={(e) => setCurrentAnswer(e.target.value)}
-        placeholder={isSpeaking ? "AI is speaking... listening will resume shortly." : "Type your answer here or use the microphone..."}
-        className={`w-full min-h-[250px] p-8 bg-white border rounded-[32px] shadow-inner focus:ring-4 focus:ring-scoop-teal/5 focus:border-scoop-teal outline-none transition-all resize-none text-xl leading-relaxed ${isSpeaking ? 'border-scoop-teal/20 bg-scoop-teal/[0.01]' : 'border-black/10'}`}
-      />
-                    
+                    <textarea
+                      value={currentAnswer + (transcript ? transcript : '')}
+                      onChange={(e) => setCurrentAnswer(e.target.value)}
+                      placeholder={isSpeaking ? "AI is speaking... listening will resume shortly." : "Type your answer here or use the microphone..."}
+                      className={`w-full min-h-[250px] p-8 bg-white border rounded-[32px] shadow-inner focus:ring-4 focus:ring-scoop-teal/5 focus:border-scoop-teal outline-none transition-all resize-none text-xl leading-relaxed ${isSpeaking ? 'border-scoop-teal/20 bg-scoop-teal/[0.01]' : 'border-black/10'}`}
+                    />
+
                     <div className="absolute top-6 right-6 flex items-center gap-2">
                       {(currentAnswer || transcript) && (
-                        <button 
+                        <button
                           onClick={() => { setCurrentAnswer(''); setTranscript(''); }}
-                          className="p-2 text-black/20 hover:text-red-500 transition-colors"
+                          className="cursor-pointer p-2 text-black/20 hover:text-red-500 transition-colors"
                           title="Clear Answer"
                         >
                           <RefreshCw size={18} />
@@ -1802,53 +2063,52 @@ export default function App() {
                       )}
                     </div>
 
-      <div className="absolute bottom-6 right-6 flex items-center gap-3">
-        <AnimatePresence>
-          {isSpeaking && shouldBeListening.current && (
-            <motion.span
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="text-[10px] font-mono text-scoop-teal bg-scoop-teal/5 px-2 py-1 rounded uppercase tracking-widest"
-            >
-              AI Speaking - Mic Paused
-            </motion.span>
-          )}
-          {speechError && (
-            <motion.span
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              className="text-xs font-mono text-red-500 bg-red-50 px-2 py-1 rounded"
-            >
-              {speechError}
-            </motion.span>
-          )}
-        </AnimatePresence>
-        <button
-          onClick={toggleListening}
-          className={`p-4 rounded-full transition-all shadow-lg ${
-            isListening 
-              ? 'bg-red-500 text-white animate-pulse' 
-              : isSpeaking && shouldBeListening.current
-                ? 'bg-scoop-teal/10 text-scoop-teal cursor-wait'
-                : 'bg-black/5 text-black hover:bg-scoop-teal hover:text-white'
-          }`}
-          title={isListening ? "Stop Listening" : "Start Voice Input"}
-        >
-          {isListening ? <MicOff size={24} /> : <Mic size={24} />}
-        </button>
-      </div>
+                    <div className="absolute bottom-6 right-6 flex items-center gap-3">
+                      <AnimatePresence>
+                        {isSpeaking && shouldBeListening.current && (
+                          <motion.span
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="text-[10px] font-mono text-scoop-teal bg-scoop-teal/5 px-2 py-1 rounded uppercase tracking-widest"
+                          >
+                            AI Speaking - Mic Paused
+                          </motion.span>
+                        )}
+                        {speechError && (
+                          <motion.span
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="text-xs font-mono text-red-500 bg-red-50 px-2 py-1 rounded"
+                          >
+                            {speechError}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                      <button
+                        onClick={toggleListening}
+                        className={`cursor-pointer p-4 rounded-full transition-all shadow-lg ${isListening
+                          ? 'bg-red-500 text-white animate-pulse'
+                          : isSpeaking && shouldBeListening.current
+                            ? 'bg-scoop-teal/10 text-scoop-teal cursor-wait'
+                            : 'bg-black/5 text-black hover:bg-scoop-teal hover:text-white'
+                          }`}
+                        title={isListening ? "Stop Listening" : "Start Voice Input"}
+                      >
+                        {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+                      </button>
+                    </div>
                   </div>
 
-          <button
-            onClick={handleNextQuestion}
-            disabled={!currentAnswer.trim() && !transcript}
-            className="w-full py-5 bg-black text-white rounded-2xl font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-scoop-teal transition-colors flex items-center justify-center gap-2 text-lg"
-          >
-            {currentQuestionIndex === QUESTIONS.length - 1 ? 'Finish Interview' : 'Next Question'}
-            <Send size={20} />
-          </button>
+                  <button
+                    onClick={handleNextQuestion}
+                    disabled={!currentAnswer.trim() && !transcript}
+                    className="cursor-pointer w-full py-5 bg-black text-white rounded-2xl font-medium disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none hover:bg-scoop-teal transition-colors flex items-center justify-center gap-2 text-lg"
+                  >
+                    {currentQuestionIndex === QUESTIONS.length - 1 ? 'Finish Interview' : 'Next Question'}
+                    <Send size={20} />
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -1867,21 +2127,21 @@ export default function App() {
                   <h2 className="text-3xl font-bold tracking-tight">Interview History</h2>
                   <p className="text-black/40 text-sm">Review your past performance and training data.</p>
                 </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={exportHistory}
-              className="flex items-center gap-2 px-4 py-2 bg-scoop-teal/10 text-scoop-teal rounded-xl text-sm font-bold hover:bg-scoop-teal/20 transition-colors"
-            >
-              <Send size={16} />
-              Export for Training
-            </button>
-            <button
-              onClick={() => setState('welcome')}
-              className="p-2 text-black/40 hover:text-black transition-colors"
-            >
-              <X size={24} />
-            </button>
-          </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={exportHistory}
+                    className="flex items-center gap-2 px-4 py-2 bg-scoop-teal/10 text-scoop-teal rounded-xl text-sm font-bold hover:bg-scoop-teal/20 transition-colors"
+                  >
+                    <Send size={16} />
+                    Export for Training
+                  </button>
+                  <button
+                    onClick={() => setState('welcome')}
+                    className="p-2 text-black/40 hover:text-black transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4">
@@ -1938,12 +2198,12 @@ export default function App() {
               animate={{ opacity: 1 }}
               className="flex flex-col items-center justify-center py-20 space-y-8"
             >
-      <div className="relative">
-        <div className="w-24 h-24 border-4 border-scoop-teal/10 rounded-full animate-spin border-t-scoop-teal"></div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-12 h-12 bg-scoop-teal rounded-full animate-pulse"></div>
-        </div>
-      </div>
+              <div className="relative">
+                <div className="w-24 h-24 border-4 border-scoop-teal/10 rounded-full animate-spin border-t-scoop-teal"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-12 h-12 bg-scoop-teal rounded-full animate-pulse"></div>
+                </div>
+              </div>
               <div className="text-center space-y-2">
                 <h3 className="text-xl font-medium">Analyzing your responses...</h3>
                 <p className="text-black/40 font-mono text-sm">AI is evaluating technical depth and sentiment</p>
@@ -1964,22 +2224,22 @@ export default function App() {
                   <h2 className="text-3xl font-bold tracking-tight">Your AI Interview Certificate</h2>
                   <p className="text-black/40">Congratulations on completing the assessment.</p>
                 </div>
-                                <div className="w-full space-y-8 max-w-[900px]">
+                <div className="w-full space-y-8 max-w-[900px]">
                   <div id="certificate-container" style={{ position: 'fixed', left: 0, top: 0, zIndex: -100, opacity: 0, pointerEvents: 'none' }}>
-                    <div id="certificate-to-download" style={{ 
-                      backgroundColor: '#f8fcfe', 
-                      color: '#000000', 
-                      fontFamily: "'Inter', sans-serif", 
-                      width: '1123px', 
-                      height: '794px', 
-                      padding: '24px', 
-                      position: 'relative', 
+                    <div id="certificate-to-download" style={{
+                      backgroundColor: '#f8fcfe',
+                      color: '#000000',
+                      fontFamily: "'Inter', sans-serif",
+                      width: '1123px',
+                      height: '794px',
+                      padding: '24px',
+                      position: 'relative',
                       boxSizing: 'border-box'
                     }} className="flex flex-col shadow-2xl">
-                      
+
                       {/* Outer Decorative Border precisely at the edges */}
                       <div style={{ position: 'absolute', top: '24px', left: '24px', right: '24px', bottom: '24px', border: '2px solid #146162', zIndex: 10 }}></div>
-                      
+
                       {/* Corner Accents - 18x18 squares intersecting the border corners */}
                       <div style={{ position: 'absolute', top: '15px', left: '15px', width: '18px', height: '18px', border: '2px solid #146162', backgroundColor: '#f8fcfe', zIndex: 15 }}></div>
                       <div style={{ position: 'absolute', top: '15px', right: '15px', width: '18px', height: '18px', border: '2px solid #146162', backgroundColor: '#f8fcfe', zIndex: 15 }}></div>
@@ -1987,19 +2247,19 @@ export default function App() {
                       <div style={{ position: 'absolute', bottom: '15px', right: '15px', width: '18px', height: '18px', border: '2px solid #146162', backgroundColor: '#f8fcfe', zIndex: 15 }}></div>
 
                       <div style={{ position: 'relative', zIndex: 20, height: '100%', display: 'flex', flexDirection: 'column', paddingTop: '15px' }}>
-                        
+
                         {/* Top Logos perfectly balanced sizes */}
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '15px', height: '65px' }}>
                           <img src="/skill_india2.png" alt="Skill India" style={{ height: '60px', objectFit: 'contain', mixBlendMode: 'multiply' }} crossOrigin="anonymous" />
-                          
+
                           <div style={{ width: '1.5px', height: '40px', background: '#000', margin: '0 30px' }}></div>
-                          
+
                           <div style={{ transform: 'translateY(-3px)' }}>
                             <span style={{ fontSize: '38px', fontWeight: 'bold', color: '#007070', letterSpacing: '-1.5px' }}>Scoop Labs<span style={{ color: '#f27d26' }}>.</span></span>
                           </div>
-                          
+
                           <div style={{ width: '1.5px', height: '40px', background: '#000', margin: '0 30px' }}></div>
-                          
+
                           <img src="/nsdc2.png" alt="NSDC" style={{ height: '70px', objectFit: 'contain', mixBlendMode: 'multiply' }} crossOrigin="anonymous" />
                         </div>
 
@@ -2010,7 +2270,7 @@ export default function App() {
 
                         {/* Title with HTML Flourishes */}
                         <div style={{ position: 'relative', textAlign: 'center', margin: '0' }}>
-                          
+
                           {/* Top Flourish */}
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
                             <div style={{ width: '140px', height: '1.5px', background: '#aaa', marginRight: '8px' }}></div>
@@ -2024,10 +2284,10 @@ export default function App() {
                             <svg width="28" height="28" viewBox="0 0 24 24" fill="#000" style={{ marginRight: '20px', alignSelf: 'center', transform: 'translateY(-5px)' }}>
                               <path d="M12 0 L14 10 L24 12 L14 14 L12 24 L10 14 L0 12 L10 10 Z" />
                             </svg>
-                            <div style={{ 
-                              fontSize: '40px', 
-                              fontWeight: '500', 
-                              color: '#286a94', 
+                            <div style={{
+                              fontSize: '40px',
+                              fontWeight: '500',
+                              color: '#286a94',
                               fontFamily: "'Playfair Display', serif",
                               textTransform: 'uppercase',
                               letterSpacing: '1px',
@@ -2074,73 +2334,48 @@ export default function App() {
                         </div>
 
                         <div style={{ textAlign: 'center', width: '600px', margin: '0 auto', fontSize: '18px', color: '#333', lineHeight: '1.5', zIndex: 10 }}>
-                          conducted as part of the Scoop Labs Career<br/>Readiness Program.
+                          conducted as part of the Scoop Labs Career<br />Readiness Program.
                         </div>
 
                         {/* Bottom Section Layout */}
                         <div style={{ position: 'absolute', bottom: '50px', left: '70px', right: '70px', height: '170px' }}>
-                          
+
                           {/* Left Signature Block - constrained width */}
                           <div style={{ position: 'absolute', left: 0, top: 0, width: '240px', height: '100%', textAlign: 'center' }}>
                             <img src="/signature2.png" alt="Signature" style={{ height: '65px', position: 'absolute', top: '50px', left: '50%', transform: 'translateX(-50%)', mixBlendMode: 'multiply' }} crossOrigin="anonymous" />
-                            
+
                             {/* Rigid Baseline */}
                             <div style={{ position: 'absolute', top: '120px', left: 0, width: '240px', height: '2px', background: '#000' }}></div>
-                            
+
                             {/* Text below baseline */}
                             <div style={{ position: 'absolute', top: '130px', left: 0, width: '240px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '15px', fontWeight: 'bold' }}>K PRASANNA</div>
-                                <div style={{ fontSize: '13px' }}>PROGRAM COORDINATOR</div>
-                                <div style={{ fontSize: '15px', fontWeight: 'bold' }}>SCOOP LABS</div>
+                              <div style={{ fontSize: '15px', fontWeight: 'bold' }}>K PRASANNA</div>
+                              <div style={{ fontSize: '13px' }}>PROGRAM COORDINATOR</div>
+                              <div style={{ fontSize: '15px', fontWeight: 'bold' }}>SCOOP LABS</div>
                             </div>
                           </div>
 
                           {/* Center AI Brain Icon */}
                           <div style={{ position: 'absolute', left: '50%', top: '0', transform: 'translateX(-50%)', opacity: 0.10, zIndex: 5 }}>
                             <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                              <path d="M12 8v4"/>
-                              <path d="M12 16h.01"/>
+                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                              <path d="M12 8v4" />
+                              <path d="M12 16h.01" />
                             </svg>
                           </div>
 
                           {/* Right Stamp Block - constrained width */}
                           <div style={{ position: 'absolute', right: 0, top: 0, width: '240px', height: '100%', textAlign: 'center' }}>
-                            <div style={{ position: 'absolute', top: '-5px', left: '50%', transform: 'translateX(-50%)', zIndex: 40 }}>
-                              <div style={{ 
-                                border: '2.5px dashed #1a4d6d', 
-                                borderRadius: '50%', 
-                                width: '115px', 
-                                height: '115px', 
-                                display: 'flex', 
-                                flexDirection: 'column',
-                                alignItems: 'center', 
-                                justifyContent: 'center',
-                                fontSize: '11px', 
-                                color: '#1a4d6d', 
-                                fontWeight: 'bold', 
-                                transform: 'rotate(-8deg)',
-                                textAlign: 'center',
-                                lineHeight: '1.2',
-                                padding: '6px',
-                                position: 'relative',
-                                background: 'transparent'
-                              }}>
-                                <div style={{ position: 'absolute', top: 3.5, left: 3.5, right: 3.5, bottom: 3.5, border: '1.5px solid #1a4d6d', borderRadius: '50%' }}></div>
-                                <div style={{ fontSize: '8px', marginTop: '12px' }}>★★★</div>
-                                <div style={{ fontSize: '13px', borderTop: '1.5px solid #1a4d6d', borderBottom: '1.5px solid #1a4d6d', padding: '3px 0', margin: '3px 0', width: '90%' }}>SCOOP LABS</div>
-                                <div style={{ fontSize: '6px' }}>***</div>
-                                <div style={{ fontSize: '6px', whiteSpace: 'nowrap', marginBottom: '6px' }}>Banashankari, Bangalore</div>
-                                <div style={{ fontSize: '8px', position: 'absolute', bottom: '16px' }}>★★★</div>
-                              </div>
+                            <div style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', zIndex: 40 }}>
+                              <img src="/seal.png" alt="Scoop Labs Seal" style={{ width: '130px', height: 'auto', objectFit: 'contain' }} />
                             </div>
-                            
+
                             {/* Rigid Baseline */}
                             <div style={{ position: 'absolute', top: '120px', left: 0, width: '240px', height: '2px', background: '#000' }}></div>
-                            
+
                             {/* Text below baseline */}
                             <div style={{ position: 'absolute', top: '130px', left: 0, width: '240px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '15px', fontWeight: 'bold' }}>SCOOP LABS</div>
+                              <div style={{ fontSize: '15px', fontWeight: 'bold' }}>SCOOP LABS</div>
                             </div>
                           </div>
 
@@ -2153,11 +2388,10 @@ export default function App() {
                     <button
                       onClick={downloadCertificate}
                       disabled={isGenerating}
-                      className={`flex-1 w-full py-5 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 text-lg shadow-xl ${
-                        isGenerating 
-                          ? 'bg-gray-400 cursor-not-allowed' 
-                          : 'bg-scoop-teal text-white hover:bg-scoop-dark shadow-scoop-teal/20'
-                      }`}
+                      className={`flex-1 w-full py-5 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 text-lg shadow-xl ${isGenerating
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-scoop-teal text-white hover:bg-scoop-dark shadow-scoop-teal/20'
+                        }`}
                     >
                       {isGenerating ? (
                         <>
@@ -2171,7 +2405,7 @@ export default function App() {
                         </>
                       )}
                     </button>
-                    
+
                     <a
                       href="https://scooplabs.in/full-stack-mern-course-bengaluru"
                       target="_blank"
@@ -2183,7 +2417,7 @@ export default function App() {
                   </div>
 
                   {hasDownloaded && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="space-y-4 pt-4 border-t border-black/5"
@@ -2209,7 +2443,7 @@ export default function App() {
                   )}
 
                   {certError && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl flex items-center gap-3 text-red-200 text-sm"
@@ -2225,86 +2459,86 @@ export default function App() {
 
               {/* Bottom Section: Summary & Performance */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              {/* Left Side: Summary */}
-              <div className="space-y-8">
-                <div className="space-y-2">
-                  <h2 className="text-4xl font-bold tracking-tight">Interview Summary</h2>
-                  <p className="text-black/40 font-mono text-sm uppercase tracking-wider">Candidate ID: #SV-{Math.floor(Math.random() * 10000)}</p>
-                </div>
-                
-                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
-                  {QUESTIONS.map((q, i) => (
-                    <div key={i} className="p-5 bg-white border border-black/5 rounded-2xl space-y-3 relative group hover:border-scoop-teal transition-colors">
-                      <div className="flex justify-between items-start">
-                        <span className="text-[10px] font-mono uppercase text-black/30">Question {i + 1}</span>
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-scoop-teal/5 border border-scoop-teal/10 text-scoop-teal text-[10px] font-bold">
-                  {evaluation.individualScores[i]}/10
-                </div>
-              </div>
-                      <div className="text-sm font-medium leading-tight text-black/80">{q.text}</div>
-                      <div className="p-3 rounded-xl bg-black/[0.02] text-xs text-black/60 italic leading-relaxed">
-                        "{answers[i]}"
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right Side: Performance */}
-              <div className="bg-black text-white rounded-[40px] p-10 shadow-2xl shadow-black/20 space-y-10 flex flex-col">
+                {/* Left Side: Summary */}
                 <div className="space-y-8">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-bold">Performance Analysis</h3>
-                    <div className="flex flex-col items-end">
-                      <span className="text-lg font-black tracking-tighter text-scoop-teal leading-none">SCOOP</span>
-                      <span className="text-lg font-black tracking-tighter text-scoop-teal leading-none">LABS<span className="text-scoop-orange">.</span></span>
-                    </div>
+                  <div className="space-y-2">
+                    <h2 className="text-4xl font-bold tracking-tight">Interview Summary</h2>
+                    <p className="text-black/40 font-mono text-sm uppercase tracking-wider">Candidate ID: #SV-{Math.floor(Math.random() * 10000)}</p>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-end">
-                      <span className="text-xs font-mono uppercase tracking-widest text-white/40">Overall AI Score</span>
-                      <span className="text-5xl font-bold tracking-tighter text-emerald-400">{evaluation.score}%</span>
-                    </div>
-                    <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${evaluation.score}%` }}
-                        transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
-                        className="h-full bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 pt-6 border-t border-white/10">
-                    <div className="flex items-center gap-2 text-emerald-400">
-                      <CheckCircle size={18} />
-                      <span className="text-xs font-mono uppercase tracking-widest">AI Insights</span>
-                    </div>
-                    <p className="text-lg font-medium leading-snug text-white/90">
-                      {evaluation.feedback}
-                    </p>
-                  </div>
-
-                  {evaluation.suggestions.length > 0 && (
-                    <div className="space-y-4 pt-6 border-t border-white/10">
-                      <div className="flex items-center gap-2 text-amber-400">
-                        <AlertCircle size={18} />
-                        <span className="text-xs font-mono uppercase tracking-widest">Corrections</span>
-                      </div>
-                      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                        {evaluation.suggestions.map((s, i) => (
-                          <div key={i} className="text-xs text-white/60 leading-relaxed flex gap-2 border-b border-white/5 pb-2">
-                            <span className="text-amber-400 font-bold shrink-0">•</span>
-                            <span>{s}</span>
+                  <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
+                    {QUESTIONS.map((q, i) => (
+                      <div key={i} className="p-5 bg-white border border-black/5 rounded-2xl space-y-3 relative group hover:border-scoop-teal transition-colors">
+                        <div className="flex justify-between items-start">
+                          <span className="text-[10px] font-mono uppercase text-black/30">Question {i + 1}</span>
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-scoop-teal/5 border border-scoop-teal/10 text-scoop-teal text-[10px] font-bold">
+                            {evaluation.individualScores[i]}/10
                           </div>
-                        ))}
+                        </div>
+                        <div className="text-sm font-medium leading-tight text-black/80">{q.text}</div>
+                        <div className="p-3 rounded-xl bg-black/[0.02] text-xs text-black/60 italic leading-relaxed">
+                          "{answers[i]}"
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right Side: Performance */}
+                <div className="bg-black text-white rounded-[40px] p-10 shadow-2xl shadow-black/20 space-y-10 flex flex-col">
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-bold">Performance Analysis</h3>
+                      <div className="flex flex-col items-end">
+                        <span className="text-lg font-black tracking-tighter text-scoop-teal leading-none">SCOOP</span>
+                        <span className="text-lg font-black tracking-tighter text-scoop-teal leading-none">LABS<span className="text-scoop-orange">.</span></span>
                       </div>
                     </div>
-                  )}
+
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-end">
+                        <span className="text-xs font-mono uppercase tracking-widest text-white/40">Overall AI Score</span>
+                        <span className="text-5xl font-bold tracking-tighter text-emerald-400">{evaluation.score}%</span>
+                      </div>
+                      <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${evaluation.score}%` }}
+                          transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
+                          className="h-full bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pt-6 border-t border-white/10">
+                      <div className="flex items-center gap-2 text-emerald-400">
+                        <CheckCircle size={18} />
+                        <span className="text-xs font-mono uppercase tracking-widest">AI Insights</span>
+                      </div>
+                      <p className="text-lg font-medium leading-snug text-white/90">
+                        {evaluation.feedback}
+                      </p>
+                    </div>
+
+                    {evaluation.suggestions.length > 0 && (
+                      <div className="space-y-4 pt-6 border-t border-white/10">
+                        <div className="flex items-center gap-2 text-amber-400">
+                          <AlertCircle size={18} />
+                          <span className="text-xs font-mono uppercase tracking-widest">Corrections</span>
+                        </div>
+                        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                          {evaluation.suggestions.map((s, i) => (
+                            <div key={i} className="text-xs text-white/60 leading-relaxed flex gap-2 border-b border-white/5 pb-2">
+                              <span className="text-amber-400 font-bold shrink-0">•</span>
+                              <span>{s}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
             </motion.div>
           )}
         </AnimatePresence>
