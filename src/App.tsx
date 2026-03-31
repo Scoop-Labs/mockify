@@ -369,7 +369,7 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
     const uniqueRecords = new Map();
     
     data.forEach(item => {
-      const email = item.userInfo.email.toLowerCase();
+      const email = item.userInfo?.email?.toLowerCase() || 'anonymous';
       const existing = uniqueRecords.get(email);
       
       if (!existing || (item.evaluation && !existing.evaluation)) {
@@ -386,7 +386,7 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
       u.evaluation ? 'Completed' : (u.status || 'Started')
     ]);
     
-    const csvContent = [headers, ...rows].map(e => e.map(val => `"${val}"`).join(",")).join("\n");
+    const csvContent = [headers, ...rows].map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",")) // Escapes internal quotes too.join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -563,6 +563,11 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
+      if (u && ADMIN_EMAILS.includes(u.email?.toLowerCase() || '')) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -610,36 +615,41 @@ export default function App() {
   };
 
   const logUserEvent = async (status: string, customUserInfo?: any) => {
-    try {
-      const info = customUserInfo || userInfo;
-      const email = (info.email || 'anonymous@example.com').toLowerCase().trim();
-      
-      // Log registration
-      await addDoc(collection(db, 'user_registrations'), {
-        userInfo: {
-          firstName: info.firstName || 'Anonymous',
-          lastName: info.lastName || '',
-          email: email
-        },
-        timestamp: serverTimestamp(),
-        status
-      }).catch(e => handleFirestoreError(e, OperationType.CREATE, 'user_registrations'));
+  try {
+    const info = customUserInfo || userInfo;
+    
+    // 1. Safety check: Exit if no email is present
+    if (!info.email) return;
+    const email = info.email.toLowerCase().trim();
 
-      // Also mark email as used if they started or completed
-      if (status === 'started_test' || status === 'completed_test') {
-        await setDoc(doc(db, 'used_emails', email), {
-          used: true,
-          lastStatus: status,
-          timestamp: serverTimestamp()
-        }).catch(e => console.warn("Could not mark email as used", e));
-      }
+    // 2. Update the UNIQUE user record
+    // Using the email as the ID ensures one row per person in your Dashboard
+    await setDoc(doc(db, 'user_registrations', email), {
+      userInfo: {
+        firstName: info.firstName || 'Anonymous',
+        lastName: info.lastName || '',
+        email: email
+      },
+      lastUpdated: serverTimestamp(), // Changed to 'lastUpdated' for clarity
+      status: status // This will update from 'started_test' to 'completed_test'
+    }, { merge: true });
 
-      // Add to general logs
-      await logEvent(status, { email, firstName: info.firstName });
-    } catch (error) {
-      console.error(`Error logging event: ${status}`, error);
+    // 3. Mark email as used/active
+    if (status === 'started_test' || status === 'completed_test') {
+      await setDoc(doc(db, 'used_emails', email), {
+        used: true,
+        lastStatus: status,
+        timestamp: serverTimestamp()
+      }, { merge: true });
     }
-  };
+
+    // Optional: Log to Google Analytics if you have it set up
+    // await logEvent(analytics, status, { email });
+
+  } catch (error) {
+    console.error(`Error logging event: ${status}`, error);
+  }
+};
 
   const logEvent = async (event: string, details: any = {}) => {
     try {
@@ -924,9 +934,9 @@ export default function App() {
     
     performEvaluation(newAnswers);
     
-    if (streamsRef.current.camera) {
+    /*if (streamsRef.current.camera) {
       streamsRef.current.camera.getTracks().forEach(track => track.stop());
-    }
+    } */
     if (streamsRef.current.screen) {
       streamsRef.current.screen.getTracks().forEach(track => track.stop());
     }
