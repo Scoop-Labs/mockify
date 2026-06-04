@@ -519,7 +519,7 @@ interface HistoryItem {
   answers: string[];
 }
 
-type InterviewState = 'landing' | 'tech-selection' | 'experience-selection' | 'email-capture' | 'otp-verification' | 'generating-questions' | 'subject' | 'welcome' | 'interviewing' | 'evaluating' | 'completed' | 'history' | 'admin';
+type InterviewState = 'landing' | 'tech-selection' | 'experience-selection' | 'email-capture' | 'otp-verification' | 'generating-questions' | 'subject' | 'welcome' | 'interviewing' | 'evaluating' | 'completed' | 'history' | 'admin' | 'link-expired';
 type Subject = 'frontend' | 'python' | 'linux' | 'Frontend Developer' | 'Python Developer' | 'Full Stack Java' | 'DevOps Engineer' | 'HTML & CSS & JS' | 'React JS' | 'Docker' | 'Manual Testing' | 'API Testing';
 type AssessmentMode = 'role' | 'tech' | null;
 
@@ -1258,6 +1258,80 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
 
 export default function App() {
   const [state, setState] = useState<InterviewState>('landing');
+  const [token, setToken] = useState<string | null>(null);
+  const [tokenValidating, setTokenValidating] = useState<boolean>(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+
+  const parseKey = (key: string): { subject: Subject; experience: string; mode: AssessmentMode } => {
+    const k = key.toLowerCase();
+    
+    // 1. Determine Subject
+    let subject: Subject = 'frontend';
+    if (k.includes('devops')) subject = 'DevOps Engineer';
+    else if (k.includes('python')) subject = 'Python Developer';
+    else if (k.includes('java')) subject = 'Full Stack Java';
+    else if (k.includes('manual testing') || k.includes('manual_testing')) subject = 'Manual Testing';
+    else if (k.includes('api testing') || k.includes('api_testing')) subject = 'API Testing';
+    else if (k.includes('frontend') || k.includes('html')) subject = 'Frontend Developer';
+    else if (k.includes('react')) subject = 'React JS';
+    else if (k.includes('docker')) subject = 'Docker';
+    else if (k.includes('linux')) subject = 'Linux';
+    
+    // 2. Determine Experience Level
+    let experience = '0-1';
+    if (k.includes('3y') || k.includes('3 year') || k.includes('3_year') || k.includes('intermediate')) {
+      experience = '1-3';
+    } else if (k.includes('1y') || k.includes('1 year') || k.includes('1_year') || k.includes('fresher')) {
+      experience = '0-1';
+    }
+    
+    // 3. Determine Mode
+    let mode: AssessmentMode = 'role';
+    if (k.includes('tech') || k.includes('normal')) {
+      mode = 'tech';
+    } else if (k.includes('role') || k.includes('meta')) {
+      mode = 'role';
+    }
+    
+    return { subject, experience, mode };
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    if (urlToken) {
+      setToken(urlToken);
+      setTokenValidating(true);
+      
+      fetch(`/api/validate-token?token=${encodeURIComponent(urlToken)}`)
+        .then(res => res.json())
+        .then(data => {
+          setTokenValidating(false);
+          if (data.valid) {
+            const { subject, experience, mode } = parseKey(data.role || '');
+            setSelectedSubject(subject);
+            setExperienceLevel(experience);
+            setAssessmentMode(mode);
+            
+            if (data.candidate_email && data.candidate_email !== 'candidate@example.com' && data.candidate_email !== 'campaign') {
+              setCapturedEmail(data.candidate_email);
+              setUserInfo(prev => ({ ...prev, email: data.candidate_email }));
+            }
+            
+            setState('email-capture');
+          } else {
+            setTokenError(data.message || 'Interview link has expired or is invalid.');
+            setState('link-expired');
+          }
+        })
+        .catch(err => {
+          console.error("Token verification failed:", err);
+          setTokenValidating(false);
+          setTokenError("Failed to verify interview link. Please try again.");
+          setState('link-expired');
+        });
+    }
+  }, []);
   const [assessmentMode, setAssessmentMode] = useState<AssessmentMode>(null);
   const [experienceLevel, setExperienceLevel] = useState<string>('');
   const [capturedEmail, setCapturedEmail] = useState<string>('');
@@ -1557,6 +1631,20 @@ export default function App() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [state, currentQuestionIndex]);
+
+  const deactivateToken = async (score: number) => {
+    if (!token) return;
+    try {
+      await fetch('/api/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, status: 'completed', score })
+      });
+      console.log("Token deactivated successfully");
+    } catch (err) {
+      console.error("Failed to deactivate token:", err);
+    }
+  };
 
   const saveInterviewToFirebase = async (interviewData: any) => {
     try {
@@ -2345,6 +2433,7 @@ ${allAnswers.map((ans, i) => `Q${i + 1}: ${(currentQuestions as any)[i].text}\nA
         setHistory(updatedHistory);
         localStorage.setItem('interview_history', JSON.stringify(updatedHistory));
 
+        await deactivateToken(finalEvaluation.score);
         setState('completed');
         setHasFinished(true);
         setIsCompleted(true);
@@ -2447,6 +2536,7 @@ ${allAnswers.map((ans, i) => `Q${i + 1}: ${(currentQuestions as any)[i].text}\nA
       setHistory(updatedHistory);
       localStorage.setItem('interview_history', JSON.stringify(updatedHistory));
 
+      await deactivateToken(finalScore);
       setState('completed');
       setHasFinished(true);
       setIsCompleted(true);
@@ -2793,9 +2883,52 @@ Provide 3 to 5 conceptGroups for each question, representing the key points the 
         </div>
       </header>
 
-      <main className={`mx-auto ${state === 'landing' ? 'px-0 py-0' : 'px-6 py-12 md:py-20'} ${state === 'landing' ? 'w-full' : (state === 'completed' || state === 'admin') ? 'max-w-6xl' : 'max-w-4xl'}`}>
+      <main className={`mx-auto ${state === 'landing' ? 'px-0 py-0' : 'px-6 py-12 md:py-20'} ${state === 'landing' ? 'w-full' : (state === 'completed' || state === 'admin' || state === 'link-expired') ? 'max-w-6xl' : 'max-w-4xl'}`}>
         <AnimatePresence mode="wait">
-          {state === 'landing' && (
+          {tokenValidating ? (
+            <motion.div
+              key="token-loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="min-h-[65vh] flex flex-col items-center justify-center p-6"
+            >
+              <div className="flex flex-col items-center justify-center space-y-6">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full border-4 border-scoop-teal/20 animate-[spin_3s_linear_infinite]" />
+                  <div className="w-20 h-20 rounded-full border-4 border-t-scoop-teal animate-spin absolute top-0 left-0" />
+                  <Bot size={28} className="text-scoop-teal absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-xl font-bold text-gray-900">Verifying assessment link...</h3>
+                  <p className="text-gray-500 text-sm max-w-sm">Please wait while we validate your interview token.</p>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <>
+              {state === 'link-expired' && (
+                <motion.div
+                  key="link-expired"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="flex flex-col items-center justify-center min-h-[65vh] text-center p-6 space-y-6"
+                >
+                  <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center text-red-600 shadow-lg shadow-red-100">
+                    <AlertCircle size={40} />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-black text-gray-900">Interview Link Expired</h2>
+                    <p className="text-gray-500 text-base max-w-md mx-auto">
+                      {tokenError || "This interview assessment link is either invalid, has expired, or has already been completed."}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-400">If you believe this is an error, please contact your administrator or recruiter.</p>
+                </motion.div>
+              )}
+
+              {state === 'landing' && (
             <LandingPage
               onStart={() => {
                 logUserEvent('clicked_get_started');
@@ -3715,6 +3848,8 @@ Provide 3 to 5 conceptGroups for each question, representing the key points the 
               </div>
             </motion.div>
           )}
+          </>
+        )}
         </AnimatePresence>
       </main>
     </div>
