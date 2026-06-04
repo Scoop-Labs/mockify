@@ -1259,7 +1259,12 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
 export default function App() {
   const [state, setState] = useState<InterviewState>('landing');
   const [token, setToken] = useState<string | null>(null);
-  const [tokenValidating, setTokenValidating] = useState<boolean>(false);
+  const [tokenValidating, setTokenValidating] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).has('token');
+    }
+    return false;
+  });
   const [tokenError, setTokenError] = useState<string | null>(null);
 
   const parseKey = (key: string): { subject: Subject; experience: string; mode: AssessmentMode } => {
@@ -1279,9 +1284,9 @@ export default function App() {
     
     // 2. Determine Experience Level
     let experience = '0-1';
-    if (k.includes('3y') || k.includes('3 year') || k.includes('3_year') || k.includes('intermediate')) {
+    if (k.includes('3y') || k.includes('3 year') || k.includes('3_year') || k.includes('intermediate') || k.includes('3')) {
       experience = '1-3';
-    } else if (k.includes('1y') || k.includes('1 year') || k.includes('1_year') || k.includes('fresher')) {
+    } else if (k.includes('1y') || k.includes('1 year') || k.includes('1_year') || k.includes('fresher') || k.includes('1')) {
       experience = '0-1';
     }
     
