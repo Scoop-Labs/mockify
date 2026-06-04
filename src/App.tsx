@@ -1646,6 +1646,27 @@ export default function App() {
     }
   };
 
+  const logAttendanceToSheet = async (score: number) => {
+    try {
+      const candidateName = `${userInfo.firstName} ${userInfo.lastName}`.trim() || 'Anonymous Candidate';
+      await fetch('/api/log-attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: candidateName,
+          phone: userInfo.phone || 'N/A',
+          email: userInfo.email.toLowerCase().trim() || 'anonymous@example.com',
+          marks: score,
+          subject: selectedSubject,
+          experience: experienceLevel || 'N/A'
+        })
+      });
+      console.log("Attendance logged successfully to sheet");
+    } catch (err) {
+      console.error("Failed to log attendance to sheet:", err);
+    }
+  };
+
   const saveInterviewToFirebase = async (interviewData: any) => {
     try {
       await addDoc(collection(db, 'interviews'), {
@@ -2434,6 +2455,7 @@ ${allAnswers.map((ans, i) => `Q${i + 1}: ${(currentQuestions as any)[i].text}\nA
         localStorage.setItem('interview_history', JSON.stringify(updatedHistory));
 
         await deactivateToken(finalEvaluation.score);
+        await logAttendanceToSheet(finalEvaluation.score);
         setState('completed');
         setHasFinished(true);
         setIsCompleted(true);
@@ -2537,6 +2559,7 @@ ${allAnswers.map((ans, i) => `Q${i + 1}: ${(currentQuestions as any)[i].text}\nA
       localStorage.setItem('interview_history', JSON.stringify(updatedHistory));
 
       await deactivateToken(finalScore);
+      await logAttendanceToSheet(finalScore);
       setState('completed');
       setHasFinished(true);
       setIsCompleted(true);
