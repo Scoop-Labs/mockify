@@ -52,7 +52,11 @@ export default async function handler(req, res) {
     for (let i = 1; i < lines.length; i++) {
       const row = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
       const keyVal = row[keyIndex];
-      const tokenVal = row[tokenIndex];
+      let tokenVal = row[tokenIndex];
+
+      if (!tokenVal && keyVal) {
+        tokenVal = keyVal.replace(/\s+/g, '_');
+      }
 
       if (tokenVal && keyVal) {
         sheetTokens.push(tokenVal);
