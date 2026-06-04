@@ -1,7 +1,9 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-const dbPath = path.resolve(process.cwd(), 'mockify.db');
+const isVercel = process.env.VERCEL || process.env.NOW_BUILDER;
+const dbDir = isVercel ? '/tmp' : process.cwd();
+const dbPath = path.resolve(dbDir, 'mockify.db');
 const db = new Database(dbPath);
 
 // Initialize tables

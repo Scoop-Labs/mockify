@@ -1,4 +1,5 @@
 import db from './db.js';
+import { syncGoogleSheet } from './sync-helper.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -12,7 +13,17 @@ export default async function handler(req, res) {
 
   try {
     const stmt = db.prepare('SELECT * FROM InterviewLinks WHERE token = ?');
-    const link = stmt.get(token);
+    let link = stmt.get(token);
+
+    if (!link) {
+      console.log(`Token ${token} not found in database. Auto-syncing from sheet...`);
+      try {
+        await syncGoogleSheet();
+        link = stmt.get(token);
+      } catch (syncErr) {
+        console.error("Auto-sync failed during validation:", syncErr);
+      }
+    }
 
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
     const userAgent = req.headers['user-agent'] || 'Unknown';
