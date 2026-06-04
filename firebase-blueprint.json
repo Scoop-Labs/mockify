@@ -5,59 +5,126 @@
       "description": "Information about the user taking the interview",
       "type": "object",
       "properties": {
-        "firstName": { "type": "string" },
-        "lastName": { "type": "string" },
-        "email": { "type": "string", "format": "email" }
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        }
       },
-      "required": ["firstName", "lastName", "email"]
+      "required": [
+        "firstName",
+        "lastName",
+        "email"
+      ]
     },
     "UserRegistration": {
       "title": "UserRegistration",
       "description": "Log of a user starting an interview",
       "type": "object",
       "properties": {
-        "userInfo": { "$ref": "UserInfo" },
-        "timestamp": { "type": "string", "format": "date-time" },
-        "status": { "type": "string" }
+        "userInfo": {
+          "$ref": "UserInfo"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string"
+        }
       },
-      "required": ["userInfo", "timestamp", "status"]
+      "required": [
+        "userInfo",
+        "timestamp",
+        "status"
+      ]
     },
     "Interview": {
       "title": "Interview",
       "description": "Completed interview data",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "date": { "type": "string", "format": "date-time" },
-        "userInfo": { "$ref": "UserInfo" },
-        "evaluation": { "type": "object" },
-        "answers": { "type": "array", "items": { "type": "object" } }
+        "id": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userInfo": {
+          "$ref": "UserInfo"
+        },
+        "evaluation": {
+          "type": "object"
+        },
+        "answers": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
       },
-      "required": ["id", "date", "userInfo", "evaluation", "answers"]
+      "required": [
+        "id",
+        "date",
+        "userInfo",
+        "evaluation",
+        "answers"
+      ]
     },
     "UsedEmail": {
       "title": "UsedEmail",
       "description": "Record of an email already used for an interview",
       "type": "object",
       "properties": {
-        "used": { "type": "boolean" },
-        "lastStatus": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
+        "used": {
+          "type": "boolean"
+        },
+        "lastStatus": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
       },
-      "required": ["used", "lastStatus", "timestamp"]
+      "required": [
+        "used",
+        "lastStatus",
+        "timestamp"
+      ]
     },
     "Log": {
       "title": "Log",
       "description": "General application event log",
       "type": "object",
       "properties": {
-        "event": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" },
-        "userId": { "type": "string" },
-        "email": { "type": "string" },
-        "details": { "type": "object" }
+        "event": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        }
       },
-      "required": ["event", "timestamp"]
+      "required": [
+        "event",
+        "timestamp"
+      ]
     }
   },
   "firestore": {

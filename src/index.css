@@ -23,3 +23,23 @@
 .scoop-text {
   color: var(--color-scoop-teal);
 }
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  display: flex;
+  width: max-content;
+  animation: scroll 30s linear infinite;
+}
+
+.pause-animation:hover .animate-scroll {
+  animation-play-state: paused;
+}
