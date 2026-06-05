@@ -98,6 +98,10 @@ export default async function handler(req, res) {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
 
+    // Format phone number to prevent Google Sheets from parsing it as a formula (starts with '+')
+    const phoneStr = String(phone);
+    const formattedPhone = phoneStr.startsWith('+') ? `'${phoneStr}` : phoneStr;
+
     // Append to Sheet (using range "A:G" which targets the first sheet tab)
     const range = "A:G";
     const appendResponse = await fetch(
@@ -114,7 +118,7 @@ export default async function handler(req, res) {
           values: [[
             new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
             name,
-            phone,
+            formattedPhone,
             email,
             marks + "%",
             subject,
