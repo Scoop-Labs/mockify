@@ -1261,7 +1261,11 @@ export default function App() {
   const [token, setToken] = useState<string | null>(null);
   const [tokenValidating, setTokenValidating] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return new URLSearchParams(window.location.search).has('token');
+      const hasQueryToken = new URLSearchParams(window.location.search).has('token');
+      const pathParts = window.location.pathname.split('/');
+      const tokenIndex = pathParts.indexOf('token');
+      const hasPathToken = tokenIndex !== -1 && pathParts[tokenIndex + 1];
+      return hasQueryToken || !!hasPathToken;
     }
     return false;
   });
@@ -1302,8 +1306,21 @@ export default function App() {
   };
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlToken = params.get('token');
+    let urlToken = null;
+    
+    // Check path token first
+    const pathParts = window.location.pathname.split('/');
+    const tokenIndex = pathParts.indexOf('token');
+    if (tokenIndex !== -1 && pathParts[tokenIndex + 1]) {
+      urlToken = pathParts[tokenIndex + 1];
+    }
+    
+    // Fallback to query token
+    if (!urlToken) {
+      const params = new URLSearchParams(window.location.search);
+      urlToken = params.get('token');
+    }
+
     if (urlToken) {
       setToken(urlToken);
       setTokenValidating(true);
