@@ -1540,9 +1540,9 @@ export default function App() {
         }
       };
 
-      // Execute CRM sync and then Email sequence
+      // Execute CRM sync
       syncToCRM(userInfo, evaluation?.score || 0);
-      captureAndEmail();
+      // captureAndEmail(); // Commented out to stop sending certification/results email per user request
     }
   }, [state, isCompleted, userInfo, evaluation]);
 
