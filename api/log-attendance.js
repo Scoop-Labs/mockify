@@ -132,7 +132,7 @@ export default async function handler(req, res) {
             body: JSON.stringify({
               range: "A1:G1",
               majorDimension: "ROWS",
-              values: [["Timestamp", "Name", "Phone Number", "Email", "Score", "Subject", "Experience"]]
+              values: [["time", "name", "phone_num", "mail", "score", "subject", "year"]]
             })
           }
         );
