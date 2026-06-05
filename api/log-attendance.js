@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -9,36 +11,130 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Missing required candidate details' });
   }
 
-  const attendanceUrl = process.env.VITE_ATTENDANCE_SHEET_URL || process.env.ATTENDANCE_SHEET_URL;
+  const serviceAccountEnv = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID || process.env.VITE_ATTENDANCE_SHEET_URL;
 
-  if (!attendanceUrl) {
-    console.warn("Missing attendance sheet URL environment variable. Logging to console instead:", req.body);
-    return res.status(200).json({ success: true, message: 'Logged to console (no sheet URL configured)' });
+  // FALLBACK: If they configured Apps Script Web App URL in VITE_ATTENDANCE_SHEET_URL
+  const attendanceUrl = process.env.VITE_ATTENDANCE_SHEET_URL || process.env.ATTENDANCE_SHEET_URL;
+  const isAppsScriptUrl = attendanceUrl && attendanceUrl.startsWith('https://script.google.com');
+
+  if (isAppsScriptUrl) {
+    console.log("Using legacy Apps Script URL for logging...");
+    try {
+      const response = await fetch(attendanceUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, email, marks, subject, experience }),
+      });
+      if (!response.ok) throw new Error(`Status ${response.status}`);
+      const result = await response.json();
+      if (result.result === 'error') throw new Error(result.error);
+      return res.status(200).json({ success: true, message: 'Logged via Apps Script fallback' });
+    } catch (err) {
+      console.error("Apps Script Fallback error:", err);
+      return res.status(500).json({ message: 'Failed to log via Apps Script fallback', error: err.message });
+    }
+  }
+
+  // Google Sheets API via Service Account
+  if (!serviceAccountEnv) {
+    return res.status(500).json({ message: 'Server configuration error: Missing GOOGLE_SERVICE_ACCOUNT_JSON' });
+  }
+  if (!spreadsheetId || spreadsheetId.startsWith('http')) {
+    return res.status(500).json({ message: 'Server configuration error: Missing or invalid GOOGLE_SPREADSHEET_ID' });
   }
 
   try {
-    const response = await fetch(attendanceUrl, {
+    const credentials = JSON.parse(serviceAccountEnv);
+    
+    // Generate JWT Assertion
+    const now = Math.floor(Date.now() / 1000);
+    const header = { alg: "RS256", typ: "JWT" };
+    const claim = {
+      iss: credentials.client_email,
+      scope: "https://www.googleapis.com/auth/spreadsheets",
+      aud: "https://oauth2.googleapis.com/token",
+      exp: now + 3600,
+      iat: now
+    };
+
+    const base64url = (str) => Buffer.from(str).toString('base64')
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+
+    const encodedHeader = base64url(JSON.stringify(header));
+    const encodedClaim = base64url(JSON.stringify(claim));
+    const signInput = `${encodedHeader}.${encodedClaim}`;
+
+    const sign = crypto.createSign('RSA-SHA256');
+    sign.update(signInput);
+    
+    // Google private key needs to have newlines replaced properly if they got double-escaped
+    const privateKey = credentials.private_key.replace(/\\n/g, '\n');
+    const signature = sign.sign(privateKey, 'base64')
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+
+    const jwt = `${signInput}.${signature}`;
+
+    // Get OAuth Access Token
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name, phone, email, marks, subject, experience }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: jwt
+      })
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Apps Script Error Response:", errorText);
-      throw new Error(`Google Apps Script responded with status ${response.status}`);
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      console.error("Token generation error:", errorText);
+      throw new Error(`Google OAuth error: ${tokenResponse.statusText}`);
     }
 
-    const result = await response.json();
-    if (result.result === 'error') {
-      throw new Error(result.error || 'Unknown Apps Script error');
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    // Append to Sheet (using range "A:G" which targets the first sheet tab)
+    const range = "A:G";
+    const appendResponse = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          range: range,
+          majorDimension: "ROWS",
+          values: [[
+            new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
+            name,
+            phone,
+            email,
+            marks + "%",
+            subject,
+            experience
+          ]]
+        })
+      }
+    );
+
+    if (!appendResponse.ok) {
+      const errorText = await appendResponse.text();
+      console.error("Append values error:", errorText);
+      throw new Error(`Google Sheets append error: ${appendResponse.statusText}`);
     }
 
-    return res.status(200).json({ success: true, message: 'Attendance logged successfully' });
+    const appendData = await appendResponse.json();
+    return res.status(200).json({ success: true, message: 'Logged to Google Sheet via Sheets API', updatedRange: appendData.tableRange });
+
   } catch (error) {
-    console.error("Attendance Logging Error:", error);
-    return res.status(500).json({ message: 'Failed to log attendance', error: error.message });
+    console.error("Google Sheets API error:", error);
+    return res.status(500).json({ message: "Failed to log to Google Sheets", error: error.message });
   }
 }
