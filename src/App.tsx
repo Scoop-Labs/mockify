@@ -1275,16 +1275,17 @@ export default function App() {
     const k = key.toLowerCase();
     
     // 1. Determine Subject
-    let subject: Subject = 'frontend';
+    let subject: Subject = 'HTML & CSS & JS';
     if (k.includes('devops')) subject = 'DevOps Engineer';
     else if (k.includes('python')) subject = 'Python Developer';
     else if (k.includes('java')) subject = 'Full Stack Java';
     else if (k.includes('manual testing') || k.includes('manual_testing')) subject = 'Manual Testing';
     else if (k.includes('api testing') || k.includes('api_testing')) subject = 'API Testing';
-    else if (k.includes('frontend') || k.includes('html')) subject = 'Frontend Developer';
+    else if (k.includes('frontend')) subject = 'Frontend Developer';
     else if (k.includes('react')) subject = 'React JS';
     else if (k.includes('docker')) subject = 'Docker';
     else if (k.includes('linux')) subject = 'Linux';
+    else if (k.includes('html') || k.includes('css') || k.includes('js') || k.includes('stack')) subject = 'HTML & CSS & JS';
     
     // 2. Determine Experience Level
     let experience = '0-1';
