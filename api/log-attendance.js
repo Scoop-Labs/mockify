@@ -98,6 +98,49 @@ export default async function handler(req, res) {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
 
+    // Check if headers exist in A1:G1
+    let hasHeaders = false;
+    try {
+      const checkResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A1:G1`,
+        {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        }
+      );
+      if (checkResponse.ok) {
+        const checkData = await checkResponse.json();
+        if (checkData.values && checkData.values.length > 0 && checkData.values[0][0]) {
+          hasHeaders = true;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not check headers status:", e);
+    }
+
+    if (!hasHeaders) {
+      console.log("Headers not found. Creating headers in A1:G1...");
+      try {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent("A1:G1")}?valueInputOption=USER_ENTERED`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              range: "A1:G1",
+              majorDimension: "ROWS",
+              values: [["Timestamp", "Name", "Phone Number", "Email", "Score", "Subject", "Experience"]]
+            })
+          }
+        );
+      } catch (e) {
+        console.warn("Failed to write headers:", e);
+      }
+    }
+
     // Format phone number to prevent Google Sheets from parsing it as a formula (starts with '+')
     const phoneStr = String(phone);
     const formattedPhone = phoneStr.startsWith('+') ? `'${phoneStr}` : phoneStr;
