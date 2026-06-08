@@ -21,10 +21,13 @@ export async function syncGoogleSheet() {
   // Parse headers: keys, tookens
   const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
   const keyIndex = headers.indexOf('keys');
-  const tokenIndex = headers.indexOf('tookens');
+  let tokenIndex = headers.indexOf('tokens');
+  if (tokenIndex === -1) {
+    tokenIndex = headers.indexOf('tookens');
+  }
 
   if (keyIndex === -1 || tokenIndex === -1) {
-    throw new Error("Google Sheet must have 'keys' and 'tookens' headers in the first row.");
+    throw new Error("Google Sheet must have 'keys' and 'tokens' (or 'tookens') headers in the first row.");
   }
 
   const sheetTokens = [];
