@@ -2450,7 +2450,7 @@ export default function App() {
 
     if (geminiApiKey) {
       try {
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${geminiApiKey}`;
         const prompt = `Evaluate the following interview answers based on the questions. 
 Respond ONLY with a JSON object in this exact format, no markdown formatting or extra text:
 {
@@ -2669,8 +2669,9 @@ ${allAnswers.map((ans, i) => `Q${i + 1}: ${(currentQuestions as any)[i].text}\nA
       if (!geminiApiKey) {
         console.warn("No Gemini API Key found. Falling back to hardcoded questions.");
         let fallback = QUESTIONS;
-        if (selectedSubject === 'python') fallback = PYTHON_QUESTIONS;
-        if (selectedSubject === 'linux') fallback = LINUX_QUESTIONS;
+        const subLower = selectedSubject.toLowerCase();
+        if (subLower.includes('python')) fallback = PYTHON_QUESTIONS;
+        else if (subLower.includes('linux')) fallback = LINUX_QUESTIONS;
         setInterviewQuestions(fallback);
         setState('welcome');
         return;
@@ -2691,7 +2692,7 @@ Each object must have this structure:
 }
 Provide 3 to 5 conceptGroups for each question, representing the key points the candidate must cover to get a perfect score. Provide at least 4 synonyms for each point.`;
 
-      const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+      const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${geminiApiKey}`;
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2718,8 +2719,9 @@ Provide 3 to 5 conceptGroups for each question, representing the key points the 
     } catch (err) {
       console.error("Error generating questions:", err);
       let fallback = QUESTIONS;
-      if (selectedSubject === 'python') fallback = PYTHON_QUESTIONS;
-      if (selectedSubject === 'linux') fallback = LINUX_QUESTIONS;
+      const subLower = selectedSubject.toLowerCase();
+      if (subLower.includes('python')) fallback = PYTHON_QUESTIONS;
+      else if (subLower.includes('linux')) fallback = LINUX_QUESTIONS;
       setInterviewQuestions(fallback);
     }
 
