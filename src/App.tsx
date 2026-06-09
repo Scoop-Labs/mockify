@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Send, CheckCircle, AlertCircle, Play, RefreshCw, User, Award, X, Download, MapPin, Mail, Phone, Instagram, Youtube, Facebook, Linkedin, Check, Code, ChevronLeft, ChevronRight, ArrowRight, Home, Bot, Camera, Monitor, SkipForward } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -748,7 +749,7 @@ const OtpVerificationPage = ({ email, code, setCode, onVerify, error, onResend }
             {code.map((digit, index) => (
               <input
                 key={index}
-                ref={(el) => inputsRef.current[index] = el}
+                ref={(el) => { inputsRef.current[index] = el; }}
                 type="text"
                 inputMode="numeric"
                 value={digit}
@@ -1284,7 +1285,7 @@ export default function App() {
     else if (k.includes('frontend')) subject = 'Frontend Developer';
     else if (k.includes('react')) subject = 'React JS';
     else if (k.includes('docker')) subject = 'Docker';
-    else if (k.includes('linux')) subject = 'Linux';
+    else if (k.includes('linux')) subject = 'linux';
     else if (k.includes('html') || k.includes('css') || k.includes('js') || k.includes('stack')) subject = 'HTML & CSS & JS';
     
     // 2. Determine Experience Level
@@ -1331,6 +1332,19 @@ export default function App() {
         .then(data => {
           setTokenValidating(false);
           if (data.valid) {
+            // Reset previous interview session data since we are starting a new token session!
+            localStorage.removeItem('interview_finished');
+            localStorage.removeItem('interview_completed');
+            localStorage.removeItem('interview_evaluation');
+            setHasFinished(false);
+            setIsCompleted(false);
+            setEvaluation(null);
+            setAnswers([]);
+            setCurrentQuestionIndex(0);
+            setTimeLeft(900);
+            setAutoStartEnabled(false);
+            window.speechSynthesis.cancel();
+
             const { subject, experience, mode } = parseKey(data.role || '');
             setSelectedSubject(subject);
             setExperienceLevel(experience);
@@ -1409,6 +1423,7 @@ export default function App() {
   const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
   const [autoStartEnabled, setAutoStartEnabled] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [interviewStartedAt, setInterviewStartedAt] = useState<number>(0);
   const [secretClickCount, setSecretClickCount] = useState(0);
   const [logoError, setLogoError] = useState(false);
   const [certLogoError, setCertLogoError] = useState(false);
@@ -2025,6 +2040,12 @@ export default function App() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && state === 'interviewing') {
+        // 15-second grace period to prevent false positives when screen sharing/permissions activate
+        const elapsed = Date.now() - interviewStartedAt;
+        if (elapsed < 15000) {
+          console.log(`Tab switch detected but ignored during 15s grace period (${elapsed}ms elapsed)`);
+          return;
+        }
         console.log('Tab switch detected. Auto-submitting...');
         forceSubmitInterview();
       }
@@ -2032,7 +2053,7 @@ export default function App() {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [state, currentQuestionIndex, answers, currentAnswer]);
+  }, [state, currentQuestionIndex, answers, currentAnswer, interviewStartedAt]);
 
   const forceSubmitInterview = () => {
     // We need to use refs or functional updates to get the latest state inside this function
@@ -2384,6 +2405,7 @@ export default function App() {
         clearInterval(interval);
         setCountdown(null);
         setState('interviewing');
+        setInterviewStartedAt(Date.now());
         setCurrentQuestionIndex(0);
         setAnswers([]);
         setTimeLeft(getTimerSeconds());
