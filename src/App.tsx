@@ -1527,37 +1527,11 @@ export default function App() {
       if (sessionStorage.getItem('email_delivered')) return;
       sessionStorage.setItem('email_delivered', 'true');
 
-      const captureAndEmail = async () => {
-        try {
-          // Wait 2500ms for everything to fully render visually
-          await new Promise(resolve => setTimeout(resolve, 2500));
-
-          const element = document.getElementById('certificate-to-download');
-          if (!element) {
-            await sendBrevoEmail(userInfo.email, userInfo.firstName, evaluation?.score || 0);
-            return;
-          }
-
-          const canvas = await html2canvas(element, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff',
-            width: 1123,
-            height: 794
-          });
-
-          const base64Data = canvas.toDataURL('image/png', 0.9).split(',')[1];
-          await sendBrevoEmail(userInfo.email, userInfo.firstName, evaluation?.score || 0, base64Data);
-        } catch (error) {
-          console.error("Silent capture failed", error);
-          await sendBrevoEmail(userInfo.email, userInfo.firstName, evaluation?.score || 0);
-        }
-      };
-
       // Execute CRM sync
       syncToCRM(userInfo, evaluation?.score || 0);
-      // captureAndEmail(); // Commented out to stop sending certification/results email per user request
+      
+      // Send thank you email directly
+      sendBrevoEmail(userInfo.email, userInfo.firstName, evaluation?.score || 0);
     }
   }, [state, isCompleted, userInfo, evaluation]);
 
@@ -1576,7 +1550,7 @@ export default function App() {
             
             <p style="font-size: 16px; margin-bottom: 16px;">Thank you for actively participating in the interview. Your time and effort are greatly appreciated.</p>
             
-            <p style="font-size: 16px; margin-bottom: 32px;">Wishing you all the best in your future endeavors.</p>
+            <p style="font-size: 16px; margin-bottom: 32px;">Wishing you all the best in your future endeavors. Have a great day!</p>
             
             <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; color: #1e293b; line-height: 1.8;">
               <p style="margin: 0 0 1.5em 0; font-size: 16px;">Best regards,</p>
