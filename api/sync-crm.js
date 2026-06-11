@@ -14,10 +14,16 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: 'Server configuration error: Missing CRM_TOKEN in environment' });
   }
 
+  // Sanitize phone number to meet CRM requirements (max 10 characters, digits only)
+  let cleanPhone = String(phone).replace(/\D/g, '');
+  if (cleanPhone.length > 10) {
+    cleanPhone = cleanPhone.slice(-10);
+  }
+
   const payload = {
     first_name,
     last_name: last_name || '',
-    phone,
+    phone: cleanPhone,
     email_id,
     source: source || 'ai-interview',
     score: score !== undefined ? String(score) : '0.0'
