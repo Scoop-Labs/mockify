@@ -12,7 +12,15 @@ export default async function handler(req, res) {
   }
 
   const serviceAccountEnv = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID || process.env.VITE_ATTENDANCE_SHEET_URL;
+  let spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID || process.env.VITE_ATTENDANCE_SHEET_URL;
+
+  // Extract Google Spreadsheet ID if it's passed as a full URL
+  if (spreadsheetId && spreadsheetId.startsWith('http')) {
+    const match = spreadsheetId.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    if (match) {
+      spreadsheetId = match[1];
+    }
+  }
 
   // FALLBACK: If they configured Apps Script Web App URL in VITE_ATTENDANCE_SHEET_URL
   const attendanceUrl = process.env.VITE_ATTENDANCE_SHEET_URL || process.env.ATTENDANCE_SHEET_URL;
@@ -40,7 +48,7 @@ export default async function handler(req, res) {
   if (!serviceAccountEnv) {
     return res.status(500).json({ message: 'Server configuration error: Missing GOOGLE_SERVICE_ACCOUNT_JSON' });
   }
-  if (!spreadsheetId || spreadsheetId.startsWith('http')) {
+  if (!spreadsheetId) {
     return res.status(500).json({ message: 'Server configuration error: Missing or invalid GOOGLE_SPREADSHEET_ID' });
   }
 

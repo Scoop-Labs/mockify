@@ -1745,7 +1745,7 @@ export default function App() {
         score: score.toFixed(1)
       };
 
-      const response = await fetch('https://crm.scooplabs.in/api/contacts', {
+      const response = await fetch('/api/sync-crm', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2306,6 +2306,9 @@ export default function App() {
     try {
       // Log registration to Firebase (non-blocking)
       logUserEvent('started_test');
+
+      // Sync registration to CRM (non-blocking)
+      syncToCRM(userInfo, 0);
 
       if (isDemoMode || forceDemo) {
         // Skip hardware in demo mode
