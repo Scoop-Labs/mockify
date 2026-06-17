@@ -1,5 +1,5 @@
-import db from './db.js';
-import { syncGoogleSheet } from './sync-helper.js';
+import db from '../helpers/db.js';
+import { syncGoogleSheet } from '../helpers/sync-helper.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
