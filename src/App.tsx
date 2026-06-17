@@ -2507,10 +2507,11 @@ ${allAnswers.map((ans, i) => `Q${i + 1}: ${(currentQuestions as any)[i].text}\nA
 
       const finalScore = Math.round((totalEarnedPoints / totalPossiblePoints) * 100);
 
-      const feedback = finalScore >= 80 ? "Exceptional! You have a deep understanding of web development and explained concepts clearly." :
+      const subjectName = selectedSubject.charAt(0).toUpperCase() + selectedSubject.slice(1);
+      const feedback = finalScore >= 80 ? `Exceptional! You have a deep understanding of the core concepts for this ${subjectName} assessment and explained them clearly.` :
         finalScore >= 60 ? "Great job! You know the core concepts well, though some details could be more precise." :
           finalScore >= 40 ? "Good effort. You understand the basics, but try to use more technical terminology or explain the 'why' behind concepts." :
-            "Keep learning! Focus on the fundamental concepts of HTML, CSS, and JS. Try to explain things in terms of structure, style, and logic.";
+            "Keep learning! Focus on the fundamental concepts of your chosen technology stack. Try to explain things in terms of core logic and practical use cases.";
 
       const finalEvaluation = {
         score: finalScore,
