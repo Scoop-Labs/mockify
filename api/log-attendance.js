@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { name, phone, email, marks, subject, experience } = req.body;
+  const { name, phone, email, marks, subject, experience, token } = req.body;
 
   if (!name || !phone || !email || marks === undefined || !subject || !experience) {
     return res.status(400).json({ message: 'Missing required candidate details' });
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       const response = await fetch(attendanceUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, email, marks, subject, experience }),
+        body: JSON.stringify({ name, phone, email, marks, subject, experience, token }),
       });
       if (!response.ok) throw new Error(`Status ${response.status}`);
       const result = await response.json();
@@ -106,11 +106,12 @@ export default async function handler(req, res) {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData.access_token;
 
-    // Check if headers exist in A1:G1
+    // Check if headers exist in A1:H1
     let hasHeaders = false;
+    let needsTokenHeader = false;
     try {
       const checkResponse = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A1:G1`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A1:H1`,
         {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -120,6 +121,10 @@ export default async function handler(req, res) {
         const checkData = await checkResponse.json();
         if (checkData.values && checkData.values.length > 0 && checkData.values[0][0]) {
           hasHeaders = true;
+          // Check if token header is missing in A1:H1
+          if (checkData.values[0].length < 8 || !checkData.values[0].some(h => String(h).trim().toLowerCase() === 'token')) {
+            needsTokenHeader = true;
+          }
         }
       }
     } catch (e) {
@@ -127,10 +132,10 @@ export default async function handler(req, res) {
     }
 
     if (!hasHeaders) {
-      console.log("Headers not found. Creating headers in A1:G1...");
+      console.log("Headers not found. Creating headers in A1:H1...");
       try {
         await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent("A1:G1")}?valueInputOption=USER_ENTERED`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent("A1:H1")}?valueInputOption=USER_ENTERED`,
           {
             method: 'PUT',
             headers: {
@@ -138,14 +143,35 @@ export default async function handler(req, res) {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              range: "A1:G1",
+              range: "A1:H1",
               majorDimension: "ROWS",
-              values: [["time", "name", "phone_num", "mail", "score", "subject", "year"]]
+              values: [["time", "name", "phone_num", "mail", "score", "subject", "year", "token"]]
             })
           }
         );
       } catch (e) {
         console.warn("Failed to write headers:", e);
+      }
+    } else if (needsTokenHeader) {
+      console.log("Adding 'token' header to H1...");
+      try {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent("H1")}?valueInputOption=USER_ENTERED`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              range: "H1",
+              majorDimension: "ROWS",
+              values: [["token"]]
+            })
+          }
+        );
+      } catch (e) {
+        console.warn("Failed to write token header to H1:", e);
       }
     }
 
@@ -153,8 +179,8 @@ export default async function handler(req, res) {
     const phoneStr = String(phone);
     const formattedPhone = phoneStr.startsWith('+') ? `'${phoneStr}` : phoneStr;
 
-    // Append to Sheet (using range "A:G" which targets the first sheet tab)
-    const range = "A:G";
+    // Append to Sheet (using range "A:H" which targets the first sheet tab)
+    const range = "A:H";
     const appendResponse = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`,
       {
@@ -173,7 +199,8 @@ export default async function handler(req, res) {
             email,
             marks + "%",
             subject,
-            experience
+            experience,
+            token || 'N/A'
           ]]
         })
       }

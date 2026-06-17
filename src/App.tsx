@@ -1056,7 +1056,7 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
   }, []);
 
   const downloadExcel = (data: any[], filename: string) => {
-    const headers = ['Date', 'First Name', 'Last Name', 'Email', 'Score', 'Status', 'Email Sent'];
+    const headers = ['Date', 'First Name', 'Last Name', 'Email', 'Score', 'Status', 'Email Sent', 'Token'];
 
     // Create a map to keep the most "complete" record for each email
     const uniqueRecords = new Map();
@@ -1077,7 +1077,8 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
       u.userInfo.email,
       u.evaluation ? `${u.evaluation.score}%` : 'N/A',
       u.evaluation ? 'Completed' : (u.status || 'Started'),
-      u.emailSent === true ? 'Yes' : (u.emailSent === false ? 'No' : 'N/A')
+      u.emailSent === true ? 'Yes' : (u.emailSent === false ? 'No' : 'N/A'),
+      u.token || 'N/A'
     ]);
 
     const csvContent = [headers, ...rows].map(e => e.map(val => `"${val}"`).join(",")).join("\n");
@@ -1158,6 +1159,7 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
                 <th className="p-4 text-xs font-mono uppercase tracking-widest">Email</th>
                 <th className="p-4 text-xs font-mono uppercase tracking-widest">Score/Status</th>
                 <th className="p-4 text-xs font-mono uppercase tracking-widest">Email Sent</th>
+                <th className="p-4 text-xs font-mono uppercase tracking-widest">Token</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
@@ -1178,6 +1180,7 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
                       {user.emailSent === true ? 'Yes' : (user.emailSent === false ? 'No' : 'N/A')}
                     </span>
                   </td>
+                  <td className="p-4 text-xs font-mono text-black/50">{user.token || 'N/A'}</td>
                 </tr>
               ))}
               {registrations.filter(r => !users.some(u => u.userInfo.email === r.userInfo.email)).map((reg, i) => (
@@ -1197,6 +1200,7 @@ const AdminDashboard = ({ users, onBack }: { users: any[], onBack: () => void })
                       {reg.emailSent === true ? 'Yes' : (reg.emailSent === false ? 'No' : 'N/A')}
                     </span>
                   </td>
+                  <td className="p-4 text-xs font-mono text-black/50">{reg.token || 'N/A'}</td>
                 </tr>
               ))}
               {users.length === 0 && registrations.length === 0 && (
@@ -1644,13 +1648,13 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [state, currentQuestionIndex]);
 
-  const deactivateToken = async (score: number) => {
+   const deactivateToken = async (score: number) => {
     if (!token) return;
     try {
       await fetch('/api/update-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, status: 'completed', score })
+        body: JSON.stringify({ token, status: 'completed', score, email: userInfo.email })
       });
       console.log("Token deactivated successfully");
     } catch (err) {
@@ -1670,7 +1674,8 @@ export default function App() {
           email: userInfo.email.toLowerCase().trim() || 'anonymous@example.com',
           marks: score,
           subject: selectedSubject,
-          experience: experienceLevel || 'N/A'
+          experience: experienceLevel || 'N/A',
+          token: token || 'N/A'
         })
       });
       console.log("Attendance logged successfully to sheet");
@@ -1683,6 +1688,7 @@ export default function App() {
     try {
       await addDoc(collection(db, 'interviews'), {
         ...interviewData,
+        token: token || 'N/A',
         date: Timestamp.now()
       }).catch(e => handleFirestoreError(e, OperationType.CREATE, 'interviews'));
 
@@ -1705,6 +1711,7 @@ export default function App() {
           lastName: info.lastName || '',
           email: email
         },
+        token: token || 'N/A',
         timestamp: serverTimestamp(),
         status
       }).catch(e => handleFirestoreError(e, OperationType.CREATE, 'user_registrations'));
@@ -1741,7 +1748,7 @@ export default function App() {
         last_name: info.lastName,
         phone: info.phone,
         email_id: info.email,
-        source: "ai-interview",
+        source: token || "ai-interview",
         score: score.toFixed(1)
       };
 

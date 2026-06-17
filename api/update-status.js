@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { token, status, score } = req.body;
+  const { token, status, score, email } = req.body;
   if (!token || !status) {
     return res.status(400).json({ message: 'Missing token or status' });
   }
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
         INSERT INTO AuditLogs (token, candidate_email, ip_address, browser, status_checked, result_score)
         VALUES (?, ?, ?, ?, ?, ?)
       `);
-      logStmt.run(token, (link && link.candidate_email) || 'campaign', ip, userAgent, 'completed', score);
+      logStmt.run(token, email || (link && link.candidate_email) || 'campaign', ip, userAgent, 'completed', score);
     }
 
     return res.status(200).json({ success: true, message: 'Status updated successfully' });
