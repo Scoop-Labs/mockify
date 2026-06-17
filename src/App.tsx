@@ -1340,6 +1340,7 @@ export default function App() {
             localStorage.removeItem('interview_finished');
             localStorage.removeItem('interview_completed');
             localStorage.removeItem('interview_evaluation');
+            sessionStorage.removeItem('email_delivered');
             setHasFinished(false);
             setIsCompleted(false);
             setEvaluation(null);
@@ -2633,7 +2634,7 @@ Each object must have this structure:
 }
 Provide 3 to 5 conceptGroups for each question, representing the key points the candidate must cover to get a perfect score. Provide at least 4 synonyms for each point.`;
 
-      const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${geminiApiKey}`;
+      const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2702,6 +2703,7 @@ Provide 3 to 5 conceptGroups for each question, representing the key points the 
     localStorage.removeItem('interview_finished');
     localStorage.removeItem('interview_completed');
     localStorage.removeItem('interview_evaluation');
+    sessionStorage.removeItem('email_delivered');
     setHasFinished(false);
     setIsCompleted(false);
     setState('tech-selection');
