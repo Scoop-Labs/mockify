@@ -2641,7 +2641,10 @@ Provide 3 to 5 conceptGroups for each question, representing the key points the 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7 }
+          generationConfig: { 
+            temperature: 0.7,
+            responseMimeType: "application/json"
+          }
         })
       });
 
@@ -2650,7 +2653,15 @@ Provide 3 to 5 conceptGroups for each question, representing the key points the 
       const data = await response.json();
       let textResponse = data.candidates[0].content.parts[0].text;
 
-      textResponse = textResponse.replace(/^```json\s*/, '').replace(/```\s*$/, '').trim();
+      // Make regex more robust to remove markdown anywhere in the string
+      textResponse = textResponse.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+      
+      // Sometimes it still includes leading text before [, so let's find the array
+      const startIndex = textResponse.indexOf('[');
+      const endIndex = textResponse.lastIndexOf(']');
+      if (startIndex !== -1 && endIndex !== -1) {
+        textResponse = textResponse.substring(startIndex, endIndex + 1);
+      }
 
       const parsedQuestions = JSON.parse(textResponse);
 
